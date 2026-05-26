@@ -1,0 +1,91 @@
+﻿@model List<Kintech.Models.CartItem>
+
+<div class="checkout-container">
+
+    <!-- LEFT: FORM -->
+    <div class="checkout-form">
+
+        <h2>Checkout</h2>
+        <form method="post" asp-controller="Checkout" asp-action="PlaceOrder">
+
+    @Html.AntiForgeryToken()
+
+    <label>Name</label>
+    <input name="Name" class="form-control" required />
+
+    <label>Email</label>
+    <input type="email"
+           name="Email"
+           class="form-control"
+           required />
+
+    <label>Phone</label>
+    <input type="text"
+           name="Phone"
+           class="form-control"
+           required />
+
+    <label>Address</label>
+    <textarea name="Address"
+              class="form-control"
+              required></textarea>
+
+       <label>Delivery Date</label>
+        <input type="date"
+       name="DeliveryDate"
+       class="form-control"
+       required />
+
+<label>Delivery Time</label>
+
+<label>Delivery Time</label>
+<select name="DeliverySlotId"
+        class="form-control"
+        required>
+    <option value="">Select Time Slot</option>
+    @foreach (var slot in ViewBag.DeliverySlots)
+    {
+        <option value="@slot.Id">
+            @slot.TimeSlot
+        </option>
+    }
+</select>
+
+    <button type="submit" class="btn-place">
+        Place Order
+    </button>
+
+</form>
+
+    </div>
+
+    <!-- RIGHT: ORDER SUMMARY -->
+    <div class="checkout-summary">
+
+        <h3>Order Summary</h3>
+
+        @{
+            decimal total = 0;
+        }
+
+        @foreach (var item in Model)
+        {
+            var itemTotal = item.Price * item.Quantity;
+            total += itemTotal;
+
+            <div class="summary-item">
+                <span>@item.Name (@item.Quantity)</span>
+                <span>৳@itemTotal</span>
+            </div>
+        }
+
+        <hr />
+
+        <div class="summary-total">
+            <strong>Total</strong>
+            <strong>৳@total</strong>
+        </div>
+
+    </div>
+
+</div>

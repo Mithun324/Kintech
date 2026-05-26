@@ -1,0 +1,56 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Kintech</title>
+
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <nav class="navbar-premium">
+
+        <!-- LEFT -->
+        <div class="nav-left">
+            <a href="/Product" class="logo">Kintech</a>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="nav-right">
+
+            <a href="/Product">Products</a>
+
+            <a href="/Cart">Cart (@ViewBag.CartCount)</a>
+
+            @if (User.IsInRole("Admin"))
+            {
+                <a href="/Admin">Admin</a>
+            }
+
+            @if (User.Identity.IsAuthenticated)
+            {
+                <form method="post" asp-controller="Account" asp-action="Logout" class="logout-form">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn-logout">Logout</button>
+                </form>
+            }
+            else
+            {
+                <a href="/Account/Login">Login</a>
+            }
+
+        </div>
+
+    </nav>
+
+    <div class="container-fluid">
+    @RenderBody()
+</div>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

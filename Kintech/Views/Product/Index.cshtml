@@ -1,0 +1,63 @@
+﻿@model Kintech.ViewModels.Product.ProductIndexViewModel
+@using Kintech.Models
+<div class="shop-layout">
+
+    <!-- LEFT SIDE: CATEGORY -->
+    <div class="sidebar">
+        @foreach (var parent in Model.Categories)
+        {
+            <div class="category-group">
+                <h4>@parent.Name</h4>
+                @if (parent.SubCategories is { Count: > 0 })
+                {
+                    @foreach (var sub in parent.SubCategories)
+                    {
+                        <a asp-controller="Product"
+                           asp-action="Index"
+                           asp-route-categoryId="@sub.Id"
+                           class="@(Model.SelectedCategoryId == sub.Id ? "active" : "")">
+                            @sub.Name
+                        </a>
+                    }
+                }
+            </div>
+        }
+    </div>
+
+    <!-- RIGHT SIDE: PRODUCTS -->
+    <div class="products">
+        @if (!Model.Products.Any())
+        {
+            <p class="no-products">No products found.</p>
+        }
+        else
+        {
+            <div class="grid">
+                @foreach (var item in Model.Products)
+                {
+                    <div class="card">
+                        <img src="@item.ImageUrl" alt="@item.Name" />
+                        <h3>@item.Name</h3>
+                        <p class="price">৳@item.Price.ToString("N2")</p>
+                        @if (item.Stock > 0)
+                        {
+                            <p class="stock">In Stock (@item.Stock left)</p>
+                        }
+                        else
+                        {
+                            <p class="stock out-stock">Out of Stock</p>
+                        }
+                        <form method="post"
+                              asp-controller="Cart"
+                              asp-action="Add">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <button type="submit" class="btn-add-cart">Add to Cart</button>
+                        </form>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+</div>

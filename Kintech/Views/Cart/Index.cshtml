@@ -1,0 +1,161 @@
+﻿@model List<Kintech.Models.CartItem>
+
+@{
+    decimal grandTotal = 0;
+}
+
+<div class="cart-page">
+
+    <div class="cart-header">
+        <h1>Your Shopping Cart</h1>
+        <p>Review your selected products before checkout.</p>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-cart">
+            <h3>Your cart is empty</h3>
+            <a href="/Product" class="btn-checkout">
+                Continue Shopping
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="cart-card">
+
+            <table class="table cart-table">
+
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @foreach (var item in Model)
+                    {
+                        var total = item.Price * item.Quantity;
+                        grandTotal += total;
+
+                        <tr>
+
+                            <td>
+                                <div class="cart-product">
+                                    <img src="@item.ImageUrl" alt="@item.Name" />
+
+                                    <div>
+                                        <h4>@item.Name</h4>
+                                        <small>Product ID: #@item.ProductId</small>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>
+                                ৳@item.Price.ToString("N2")
+                            </td>
+
+                            <td>
+
+                                <div class="qty-box">
+
+                        <!-- DECREASE -->
+                        <form method="post"
+                              asp-controller="Cart"
+                              asp-action="Decrease">
+
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden"
+                                   name="id"
+                                   value="@item.ProductId" />
+
+                            <button type="submit"
+                                    class="qty-btn minus">
+                                −
+                            </button>
+
+                        </form>
+
+                        <span class="qty-number">
+                            @item.Quantity
+                        </span>
+
+                        <!-- INCREASE -->
+                        <form method="post"
+                              asp-controller="Cart"
+                              asp-action="Increase">
+
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden"
+                                   name="id"
+                                   value="@item.ProductId" />
+
+                            <button type="submit"
+                                    class="qty-btn plus">
+                                +
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                            </td>
+
+                            <td class="item-total">
+                                ৳@total.ToString("N2")
+                            </td>
+
+                            <td>
+
+                        <form method="post"
+                         asp-controller="Cart"
+                         asp-action="Remove">
+
+                       @Html.AntiForgeryToken()
+
+                        <input type="hidden"
+                        name="id"
+                        value="@item.ProductId" />
+
+                         <button type="submit"
+                         class="remove-btn">
+                          Remove
+                </button>
+
+            </form>
+
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <div class="cart-footer">
+
+            <div class="cart-total-box">
+                <span>Total Amount</span>
+                <h2>৳@grandTotal.ToString("N2")</h2>
+            </div>
+
+            <div class="checkout-btn-wrapper">
+                <a href="/Checkout" class="btn-checkout">
+                    Proceed to Checkout
+                </a>
+            </div>
+
+        </div>
+    }
+
+</div>

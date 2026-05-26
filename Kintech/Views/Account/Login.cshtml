@@ -1,0 +1,51 @@
+﻿@{
+    ViewData["Title"] = "Admin Login";
+}
+
+<div class="auth-wrapper">
+
+    <div class="auth-card">
+
+        <div class="auth-header">
+            <h2>Admin Login</h2>
+            <p>Access the Kintech admin dashboard</p>
+        </div>
+
+        <form method="post">
+
+            @if (ViewBag.Error != null)
+            {
+                <div class="validation-box">
+                    @ViewBag.Error
+                </div>
+            }
+
+            <div class="form-group">
+                <label>Email</label>
+
+                <input type="email"
+                       name="email"
+                       placeholder="Enter admin email"
+                       class="auth-input"
+                       required />
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+
+                <input type="password"
+                       name="password"
+                       placeholder="Enter password"
+                       class="auth-input"
+                       required />
+            </div>
+
+            <button type="submit" class="auth-btn">
+                Login to Dashboard
+            </button>
+
+        </form>
+
+    </div>
+
+</div>

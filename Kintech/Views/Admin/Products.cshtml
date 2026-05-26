@@ -1,0 +1,82 @@
+﻿@model List<Kintech.Models.Product>
+@{
+    Layout = "_AdminLayout";
+}
+
+<div class="products-header">
+    <h1>Manage Products</h1>
+    <a asp-controller="Product" asp-action="Create" class="btn-create">
+        + Add Product
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-error">@TempData["Error"]</div>
+}
+
+@if (!Model.Any())
+{
+    <div class="empty-state">
+        <p>No products yet.</p>
+        <a asp-controller="Product" asp-action="Create" class="btn-create">
+            + Add your first product
+        </a>
+    </div>
+}
+else
+{
+    <div class="product-grid">
+        @foreach (var item in Model)
+        {
+            <div class="product-card">
+
+                <div class="image-wrapper">
+                    <img src="@(item.ImageUrl ?? "/images/default.png")"
+                         alt="@item.Name" />
+                </div>
+
+                <div class="product-info">
+                    <h3>@item.Name</h3>
+                    <p class="price">৳@item.Price.ToString("N2")</p>
+                    <p class="stock">
+                        @if (item.Stock > 10)
+                        {
+                            <span class="stock-badge in-stock">@item.Stock in stock</span>
+                        }
+                        else if (item.Stock > 0)
+                        {
+                            <span class="stock-badge low-stock">Only @item.Stock left</span>
+                        }
+                        else
+                        {
+                            <span class="stock-badge out-of-stock">Out of stock</span>
+                        }
+                    </p>
+                </div>
+
+                <div class="card-actions">
+                    <a asp-controller="Product"
+                       asp-action="Edit"
+                       asp-route-id="@item.Id"
+                       class="btn-edit">Edit</a>
+
+                    @* ✅ DELETE must be POST not GET *@
+                    <form method="post"
+                          asp-controller="Product"
+                          asp-action="Delete"
+                          onsubmit="return confirm('Delete @item.Name?')">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@item.Id" />
+                        <button type="submit" class="btn-delete">Delete</button>
+                    </form>
+                </div>
+
+            </div>
+        }
+    </div>
+}

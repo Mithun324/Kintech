@@ -1,0 +1,106 @@
+﻿@model List<Kintech.Models.Order>
+@using Kintech.Models
+@{
+    Layout = "_AdminLayout";
+}
+
+<h1>Orders</h1>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-error">@TempData["Error"]</div>
+}
+
+@if (!Model.Any())
+{
+    <p>No orders found.</p>
+}
+else
+{
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Customer</th>
+                <th>Email</th>
+                <th>Total</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Update</th>
+                <th>Address</th>
+                <th>Delivery</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+            {
+                var statusClass = order.Status.ToString().ToLowerInvariant();
+                <tr>
+                    <td>#@order.Id</td>
+                    <td>@order.CustomerName</td>
+                    <td>@order.CustomerEmail</td>
+                    <td>৳@order.TotalAmount.ToString("N2")</td>
+                    <td>@order.OrderDate.ToString("dd MMM yyyy")</td>
+                    <td>
+                        @order.Address
+                    </td>
+
+                    <td>
+                        @(order.DeliveryDate?.ToString("dd MMM yyyy"))
+                        <br />
+                        <small>@order.DeliverySlot?.TimeSlot</small>
+                    </td>
+                    <td>
+                        <span class="status @statusClass">
+                            @order.Status
+                        </span>
+                    </td>
+                    <td>
+                        <form method="post"
+      asp-controller="Admin"
+      asp-action="UpdateStatus">
+
+    @Html.AntiForgeryToken()
+
+    <!-- FIXED NAME -->
+    <input type="hidden"
+           name="OrderId"
+           value="@order.Id" />
+
+    <!-- FIXED NAME -->
+    <select name="Status" class="status-dropdown">
+
+        @foreach (var status in Enum.GetValues<OrderStatus>())
+        {
+            if (order.Status == status)
+            {
+                <option value="@status" selected>
+                    @status
+                </option>
+            }
+            else
+            {
+                <option value="@status">
+                    @status
+                </option>
+            }
+        }
+
+    </select>
+
+    <button type="submit" class="btn-update">
+        Update
+    </button>
+
+</form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+

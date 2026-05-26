@@ -1,0 +1,74 @@
+﻿@model Kintech.ViewModels.Product.CreateProductViewModel
+@{
+    Layout = "_AdminLayout";
+}
+
+<div class="create-product-wrapper">
+    <div class="create-card">
+        <div class="create-header">
+            <h2>Add Product</h2>
+            <p>Create and upload a new product to Kintech</p>
+        </div>
+
+        <form method="post"
+              asp-controller="Product"
+              asp-action="Create"
+              enctype="multipart/form-data">
+
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly" class="validation-box"></div>
+
+            <div class="form-group">
+                <label asp-for="Name"></label>
+                <input asp-for="Name" class="premium-input" />
+                <span asp-validation-for="Name" class="field-error"></span>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label asp-for="Price"></label>
+                    <input asp-for="Price" class="premium-input" />
+                    <span asp-validation-for="Price" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Stock"></label>
+                    <input asp-for="Stock" class="premium-input" />
+                    <span asp-validation-for="Stock" class="field-error"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Description"></label>
+                <textarea asp-for="Description" class="premium-input textarea"></textarea>
+                <span asp-validation-for="Description" class="field-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="CategoryId">Category</label>
+                <select asp-for="CategoryId"
+                        asp-items="Model.Categories"
+                        class="premium-input">
+                    <option value="">-- Select Category --</option>
+                </select>
+                <span asp-validation-for="CategoryId" class="field-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Upload Image</label>
+                <input type="file"
+                       asp-for="ImageFile"
+                       accept="image/*"
+                       class="premium-file" />
+                <span asp-validation-for="ImageFile" class="field-error"></span>
+            </div>
+
+            <button type="submit" class="btn-save">Save Product</button>
+
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

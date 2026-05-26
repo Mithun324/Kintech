@@ -1,0 +1,82 @@
+﻿@model List<Kintech.Models.Order>
+@using Kintech.Models
+
+<h2 class="page-title">Order History</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-error">@TempData["Error"]</div>
+}
+
+@if (!Model.Any())
+{
+    <p class="no-orders">No orders found.</p>
+}
+else
+{
+    @foreach (var order in Model)
+    {
+        <div class="order-card">
+
+            <div class="order-header">
+                <div>
+                    <strong>Order #@order.Id</strong><br />
+                    <small>@order.OrderDate.ToString("dd MMM yyyy, hh:mm tt")</small>  @* ✅ formatted *@
+                </div>
+                <div>
+                    <strong>৳@order.TotalAmount.ToString("N2")</strong>  @* ✅ formatted *@
+                </div>
+            </div>
+
+            <div class="order-customer">
+                <p><strong>Name:</strong> @order.CustomerName</p>
+                <p><strong>Address:</strong> @order.Address</p>
+                <p><strong>Email:</strong> @order.CustomerEmail</p>
+                <p><strong>Phone:</strong> @order.PhoneNumber</p>
+            </div>
+
+            <div class="order-items">
+                @foreach (var item in order.OrderItems)
+                {
+                    <div class="order-item">
+                        <span>@item.ProductName (x@item.Quantity)</span>
+                        <span>৳@((item.Price * item.Quantity).ToString("N2"))</span>  @* ✅ formatted *@
+                    </div>
+                }
+            </div>
+
+            <div class="order-status">
+
+                @* ✅ Fix: use string variable to avoid ToLower() overload error *@
+                @{ var statusClass = order.Status.ToString().ToLowerInvariant(); }
+                <span class="status @statusClass">@order.Status</span>
+
+                @* ✅ Status updates are now POST forms, not GET links *@
+                <div class="status-actions">
+                    @foreach (var status in Enum.GetValues<OrderStatus>())
+                    {
+                        if (status != order.Status)  @* ✅ hide current status *@
+                        {
+                            <form method="post"
+                                  asp-controller="Order"
+                                  asp-action="UpdateStatus">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@order.Id" />
+                                <input type="hidden" name="status" value="@status" />
+                                <button type="submit" class="status-btn @status.ToString().ToLowerInvariant()">
+                                    @status
+                                </button>
+                            </form>
+                        }
+                    }
+                </div>
+
+            </div>
+
+        </div>
+    }
+}

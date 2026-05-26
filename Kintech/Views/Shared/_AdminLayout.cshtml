@@ -1,0 +1,39 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin - Kintech</title>
+    <link rel="stylesheet" href="/css/admin.css" />
+</head>
+<body>
+
+<div class="admin-container">
+
+    <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+        <h2>Kintech</h2>
+        <span>Admin Panel</span>
+    </div>
+    <ul>
+        <li><a href="/Admin">Dashboard</a></li>
+        <li><a href="/Admin/Products">Products</a></li>
+        <li><a href="/Admin/Orders">Orders</a></li>
+    </ul>
+    <div class="sidebar-footer">
+        <form method="post" asp-controller="Account" asp-action="Logout">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn-logout">Sign Out</button>
+        </form>
+    </div>
+</aside>
+
+
+    <!-- Main Content -->
+    <main class="main-content">
+        @RenderBody()
+    </main>
+
+</div>
+@RenderSection("Scripts", required: false)
+</body>
+</html>
