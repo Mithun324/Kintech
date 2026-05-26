@@ -41,11 +41,51 @@
                         <p class="price">৳@item.Price.ToString("N2")</p>
                         @if (item.Stock > 0)
                         {
-                            <p class="stock">In Stock (@item.Stock left)</p>
+                            @if (item.Stock <= 0)
+                {
+                       <p class="stock sold-out">
+                                Sold Out   </p>
+                    }
+                       else if (item.Stock < 10)
+                {
+                     <p class="stock low-stock">
+                          Only @item.Stock Left
+                      </p>
+                }
+                else
+                {
+                  <p class="stock in-stock">
+                       In Stock (@item.Stock)
+                 </p>
+                        }
                         }
                         else
                         {
-                            <p class="stock out-stock">Out of Stock</p>
+                           @if (item.Stock <= 0)
+{
+    <button class="btn-soldout" disabled>
+        Sold Out
+    </button>
+}
+else
+{
+    <form method="post"
+          asp-controller="Cart"
+          asp-action="Add">
+
+        @Html.AntiForgeryToken()
+
+        <input type="hidden"
+               name="id"
+               value="@item.Id" />
+
+        <button type="submit"
+                class="btn-add-cart">
+            Add to Cart
+        </button>
+
+    </form>
+}
                         }
                         <form method="post"
                               asp-controller="Cart"

@@ -1252,3 +1252,90 @@ textarea.form-control {
     cursor: pointer;
     font-family: inherit;
 }
+/* ===== CART ACTION BUTTONS ===== */
+
+.cart-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 30px;
+    gap: 16px;
+}
+
+.btn-browse {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 13px 24px;
+    background: white;
+    color: var(--text-1);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.25s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+    .btn-browse:hover {
+        background: var(--surface-2);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+.btn-checkout {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 13px 28px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #2563EB, #1D4ED8);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.25s ease;
+    box-shadow: 0 8px 20px rgba(37,99,235,.18);
+}
+
+    .btn-checkout:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(37,99,235,.28);
+    }
+
+/* ===== STOCK STATUS ===== */
+
+.stock {
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+.in-stock {
+    color: #16A34A;
+}
+
+.low-stock {
+    color: #DC2626;
+}
+
+.sold-out {
+    color: #991B1B;
+    font-weight: 700;
+}
+
+/* ===== SOLD OUT BUTTON ===== */
+
+.btn-soldout {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 14px;
+    background: #E2E8F0;
+    color: #64748B;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: not-allowed;
+    margin-top: 14px;
+}
