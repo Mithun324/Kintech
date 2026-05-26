@@ -25,6 +25,22 @@ public class OrderService : IOrderService
     {
         ArgumentNullException.ThrowIfNull(order);
 
+        foreach (var item in order.OrderItems)
+        {
+            var product = await _context.Products
+                .FirstOrDefaultAsync(p => p.Id == item.ProductId);
+
+            if (product is null)
+                continue;
+
+            // REDUCE STOCK
+            product.Stock -= item.Quantity;
+
+            // PREVENT NEGATIVE STOCK
+            if (product.Stock < 0)
+                product.Stock = 0;
+        }
+
         _context.Orders.Add(order);
 
         await _context.SaveChangesAsync();
