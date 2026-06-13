@@ -20,11 +20,9 @@ public class PlaceOrderViewModel
     [Phone]
     public string Phone { get; set; } = string.Empty;
 
-    // ✅ NEW
     [Required]
     public DateTime DeliveryDate { get; set; }
 
-    // ✅ NEW
     [Required]
     public int DeliverySlotId { get; set; }
 }

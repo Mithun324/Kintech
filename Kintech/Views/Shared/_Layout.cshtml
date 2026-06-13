@@ -25,7 +25,12 @@
 
             <a href="/Product">Products</a>
 
-            <a href="/Cart">Cart (@ViewBag.CartCount)</a>
+           <a href="/Cart" class="cart-link">
+
+               
+    🛒 Cart
+    <span id="cartCount" class="cart-badge">0</span> </a>
+        <div class="container-fluid">
 
             @if (User.IsInRole("Admin"))
             {
@@ -48,9 +53,37 @@
 
     </nav>
 
-    <div class="container-fluid">
+    
     @RenderBody()
+        
 </div>
+
+    <partial name="_Footer" />
+
     @RenderSection("Scripts", required: false)
+
+
+    <script>
+
+async function loadCartCount() {
+
+    try {
+
+        const response = await fetch('/Cart/Count');
+
+        const count = await response.json();
+
+        document.getElementById('cartCount').innerText = count;
+
+    }
+    catch (e) {
+        console.error(e);
+    }
+}
+
+      
+loadCartCount();
+</script>
+
 </body>
 </html>

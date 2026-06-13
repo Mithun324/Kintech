@@ -33,10 +33,10 @@ public class OrderService : IOrderService
             if (product is null)
                 continue;
 
-            // REDUCE STOCK
+       
             product.Stock -= item.Quantity;
 
-            // PREVENT NEGATIVE STOCK
+ 
             if (product.Stock < 0)
                 product.Stock = 0;
         }
@@ -60,10 +60,10 @@ public class OrderService : IOrderService
         return await _context.Orders
             .AsNoTracking()
 
-            // ✅ LOAD ITEMS
+         
             .Include(o => o.OrderItems)
 
-            // ✅ LOAD DELIVERY SLOT
+   
             .Include(o => o.DeliverySlot)
 
             .OrderByDescending(o => o.OrderDate)
@@ -78,10 +78,7 @@ public class OrderService : IOrderService
         return await _context.Orders
             .AsNoTracking()
 
-            // ✅ LOAD ITEMS
             .Include(o => o.OrderItems)
-
-            // ✅ LOAD DELIVERY SLOT
             .Include(o => o.DeliverySlot)
 
             .FirstOrDefaultAsync(o => o.Id == orderId);
@@ -113,10 +110,8 @@ public class OrderService : IOrderService
         return await _context.Orders
             .AsNoTracking()
 
-            // ✅ LOAD ITEMS
             .Include(o => o.OrderItems)
 
-            // ✅ LOAD DELIVERY SLOT
             .Include(o => o.DeliverySlot)
 
             .OrderByDescending(o => o.OrderDate)

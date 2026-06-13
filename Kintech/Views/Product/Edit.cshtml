@@ -16,8 +16,8 @@
               enctype="multipart/form-data">
 
             @Html.AntiForgeryToken()
-            <input type="hidden" asp-for="Id" />             @* ✅ required for POST *@
-            <input type="hidden" asp-for="ExistingImageUrl" /> @* ✅ keep existing image *@
+            <input type="hidden" asp-for="Id" />    
+            <input type="hidden" asp-for="ExistingImageUrl" /> 
 
             <div asp-validation-summary="ModelOnly" class="validation-box"></div>
 

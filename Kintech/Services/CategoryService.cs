@@ -32,13 +32,12 @@ public class CategoryService : ICategoryService
             .ToListAsync();
     }
 
-    // ✅ THE KEY FIX — Include(SubCategories) so view doesn't get null
     public async Task<List<Category>> GetRootCategoriesAsync()
     {
         return await _context.Categories
             .AsNoTracking()
             .Where(c => c.ParentId == null)
-            .Include(c => c.SubCategories)  // ✅ this was missing
+            .Include(c => c.SubCategories) 
             .OrderBy(c => c.Name)
             .ToListAsync();
     }

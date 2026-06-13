@@ -26,18 +26,18 @@ public class ProductService : IProductService
     public async Task<Product?> GetByIdAsync(int id)
     {
         return await _context.Products
-            .AsNoTracking()                             // ✅ read-only
+            .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
     public async Task<int> GetCountAsync()
     {
-        return await _context.Products.CountAsync();   // ✅ no full load
+        return await _context.Products.CountAsync();
     }
 
     public async Task CreateAsync(Product product)
     {
-        ArgumentNullException.ThrowIfNull(product);    // ✅ guard clause
+        ArgumentNullException.ThrowIfNull(product);
 
         _context.Products.Add(product);
         await _context.SaveChangesAsync();
@@ -48,12 +48,12 @@ public class ProductService : IProductService
 
     public async Task UpdateAsync(Product product)
     {
-        ArgumentNullException.ThrowIfNull(product);    // ✅ guard clause
+        ArgumentNullException.ThrowIfNull(product);
 
         var exists = await _context.Products
             .AnyAsync(p => p.Id == product.Id);
 
-        if (!exists)                                   // ✅ explicit not-found check
+        if (!exists)
         {
             _logger.LogWarning("Update failed — Product {Id} not found.", product.Id);
             throw new KeyNotFoundException($"Product {product.Id} not found.");
@@ -69,7 +69,7 @@ public class ProductService : IProductService
     {
         var product = await _context.Products.FindAsync(id);
 
-        if (product is null)                           // ✅ explicit not-found check
+        if (product is null)
         {
             _logger.LogWarning("Delete failed — Product {Id} not found.", id);
             throw new KeyNotFoundException($"Product {id} not found.");
@@ -85,7 +85,7 @@ public class ProductService : IProductService
     {
         return await _context.Products
             .AsNoTracking()
-            .Where(p => p.CategoryId == categoryId)          // ✅ filtered in DB
+            .Where(p => p.CategoryId == categoryId)
             .ToListAsync();
     }
 }

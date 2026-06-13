@@ -23,7 +23,7 @@ public class CartService : ICartService
         if (string.IsNullOrEmpty(cartJson))
             return [];
 
-        return JsonConvert.DeserializeObject<List<CartItem>>(cartJson) ?? []; // ✅ null safe
+        return JsonConvert.DeserializeObject<List<CartItem>>(cartJson) ?? [];
     }
 
     public void SaveCart(List<CartItem> cart)
