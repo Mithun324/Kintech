@@ -22,13 +22,12 @@ public class Order
 
     public DateTime OrderDate { get; set; }
 
-    // ✅ DELIVERY DATE
+   
     public DateTime? DeliveryDate { get; set; }
 
-    // ✅ DELIVERY SLOT FK
+   
     public int? DeliverySlotId { get; set; }
 
-    // ✅ NAVIGATION PROPERTY
     public DeliverySlot? DeliverySlot { get; set; }
 
     public OrderStatus Status { get; set; } = OrderStatus.Pending;

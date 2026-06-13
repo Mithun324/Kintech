@@ -19,6 +19,6 @@ public class OrderItem
 
     public int OrderId { get; set; }
 
-    [JsonIgnore]                          // ✅ prevents circular reference
+    [JsonIgnore]   
     public Order Order { get; set; } = null!;
 }

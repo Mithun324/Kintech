@@ -1,5 +1,6 @@
 ﻿@model Kintech.ViewModels.Product.ProductIndexViewModel
 @using Kintech.Models
+
 <div class="shop-layout">
 
     <!-- LEFT SIDE: CATEGORY -->
@@ -36,64 +37,46 @@
                 @foreach (var item in Model.Products)
                 {
                     <div class="card">
-                        <img src="@item.ImageUrl" alt="@item.Name" />
-                        <h3>@item.Name</h3>
-                        <p class="price">৳@item.Price.ToString("N2")</p>
-                        @if (item.Stock > 0)
-                        {
+                        <div class="home-card-img">
+                            <img src="@(item.ImageUrl ?? "/images/default.png")"
+                                 alt="@item.Name" />
+                        </div>
+                        <div class="home-card-body">
+                            <h3 class="home-card-name">@item.Name</h3>
+                            <p class="home-card-price">৳@item.Price.ToString("N2")</p>
+
+                            @* ✅ Stock badge *@
                             @if (item.Stock <= 0)
-                {
-                       <p class="stock sold-out">
-                                Sold Out   </p>
-                    }
-                       else if (item.Stock < 10)
-                {
-                     <p class="stock low-stock">
-                          Only @item.Stock Left
-                      </p>
-                }
-                else
-                {
-                  <p class="stock in-stock">
-                       In Stock (@item.Stock)
-                 </p>
-                        }
-                        }
-                        else
-                        {
-                           @if (item.Stock <= 0)
-{
-    <button class="btn-soldout" disabled>
-        Sold Out
-    </button>
-}
-else
-{
-    <form method="post"
-          asp-controller="Cart"
-          asp-action="Add">
+                            {
+                                <span class="stock sold-out">Sold Out</span>
+                            }
+                            else if (item.Stock < 10)
+                            {
+                                <span class="stock low-stock">Only @item.Stock left</span>
+                            }
+                            else
+                            {
+                                <span class="stock in-stock">In Stock (@item.Stock)</span>
+                            }
 
-        @Html.AntiForgeryToken()
-
-        <input type="hidden"
-               name="id"
-               value="@item.Id" />
-
-        <button type="submit"
-                class="btn-add-cart">
-            Add to Cart
-        </button>
-
-    </form>
-}
-                        }
-                        <form method="post"
-                              asp-controller="Cart"
-                              asp-action="Add">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="id" value="@item.Id" />
-                            <button type="submit" class="btn-add-cart">Add to Cart</button>
-                        </form>
+                            @* ✅ Single clean Add to Cart block *@
+                            @if (item.Stock <= 0)
+                            {
+                                <button class="btn-soldout" disabled>Sold Out</button>
+                            }
+                            else
+                            {
+                                <form method="post"
+                                      asp-controller="Cart"
+                                      asp-action="Add">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit" class="btn-add-cart">
+                                        Add to Cart
+                                    </button>
+                                </form>
+                            }
+                        </div>
                     </div>
                 }
             </div>

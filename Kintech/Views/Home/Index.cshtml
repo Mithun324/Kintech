@@ -1,9 +1,222 @@
-﻿@{
+﻿@model Kintech.ViewModels.Home.HomeViewModel
+@using Kintech.Models
+
+@{
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<!-- ═══════════════════════════════════════════
+     HERO BANNER
+     ═══════════════════════════════════════════ -->
+<section class="hero">
+    <div class="hero-inner">
+        <div class="hero-text">
+            <span class="hero-eyebrow">New Arrivals 2025</span>
+            <h1 class="hero-title">Tech that moves<br /><em>with you</em></h1>
+            <p class="hero-sub">
+                Premium gadgets, accessories, and smart devices —
+                shipped fast across Bangladesh.
+            </p>
+            <div class="hero-actions">
+                <a asp-controller="Product" asp-action="Index" class="hero-btn-primary">
+                    Shop Now
+                </a>
+                <a asp-controller="Product" asp-action="Index" class="hero-btn-ghost">
+                    View All Products
+                </a>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="hero-badge">⭐ 4.9 · 2,400+ reviews</div>
+            <img src="/images/hero-product.png"
+                 alt="Featured product"
+                 onerror="this.style.display='none'" />
+        </div>
+    </div>
+</section>
 
-</div>
+<!-- ═══════════════════════════════════════════
+     CATEGORY PILLS
+     ═══════════════════════════════════════════ -->
+<section class="home-section">
+    <div class="section-header">
+        <h2 class="section-title">Shop by Category</h2>
+        <a asp-controller="Product" asp-action="Index" class="see-all">See all →</a>
+    </div>
+    <div class="cat-pills">
+        @foreach (var cat in Model.Categories)
+        {
+            <a asp-controller="Product"
+               asp-action="Index"
+               asp-route-categoryId="@cat.Id"
+               class="cat-pill">
+                @cat.Name
+            </a>
+        }
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     FEATURED PRODUCTS
+     ═══════════════════════════════════════════ -->
+<section class="home-section">
+    <div class="section-header">
+        <h2 class="section-title">Featured Products</h2>
+        <a asp-controller="Product" asp-action="Index" class="see-all">See all →</a>
+    </div>
+
+    @if (Model.FeaturedProducts.Any())
+    {
+        <div class="home-grid">
+            @foreach (var item in Model.FeaturedProducts)
+            {
+                <div class="home-card">
+                    <a asp-controller="Product"
+                       asp-action="Details"
+                       asp-route-id="@item.Id"
+                       class="home-card-img-link">
+                        <div class="home-card-img">
+                            <img src="@(item.ImageUrl ?? "/images/default.png")"
+                                 alt="@item.Name" />
+                        </div>
+                    </a>
+                    <div class="home-card-body">
+                        <span class="home-card-category">@item.Category?.Name</span>
+                        <h3 class="home-card-name">@item.Name</h3>
+                        <div class="home-card-footer">
+                            <span class="home-card-price">৳@item.Price.ToString("N2")</span>
+                            @if (item.Stock <= 0)
+                            {
+                                <button class="btn-soldout" disabled>Sold Out</button>
+                            }
+                            else
+                            {
+                                <form method="post"
+                                      asp-controller="Cart"
+                                      asp-action="Add">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit" class="btn-add-cart">+ Cart</button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <p class="no-products">No featured products yet.</p>
+    }
+</section>
+
+<!-- ═══════════════════════════════════════════
+     PROMO BANNER
+     ═══════════════════════════════════════════ -->
+<section class="promo-banner">
+    <div class="promo-inner">
+        <div class="promo-text">
+            <span class="promo-label">Limited Time</span>
+            <h2>Free delivery on orders over ৳2,000</h2>
+            <p>Shop our full range of accessories, audio, and wearables.</p>
+            <a asp-controller="Product" asp-action="Index" class="promo-btn">Shop Now</a>
+        </div>
+        <div class="promo-stats">
+            <div class="promo-stat">
+                <strong>5,000+</strong>
+                <span>Happy Customers</span>
+            </div>
+            <div class="promo-stat">
+                <strong>500+</strong>
+                <span>Products</span>
+            </div>
+            <div class="promo-stat">
+                <strong>24h</strong>
+                <span>Fast Delivery</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     NEW ARRIVALS
+     ═══════════════════════════════════════════ -->
+<section class="home-section">
+    <div class="section-header">
+        <h2 class="section-title">New Arrivals</h2>
+        <a asp-controller="Product" asp-action="Index" class="see-all">See all →</a>
+    </div>
+
+    @if (Model.NewArrivals.Any())
+    {
+        <div class="home-grid">
+            @foreach (var item in Model.NewArrivals)
+            {
+                <div class="home-card">
+                    <a asp-controller="Product"
+                       asp-action="Details"
+                       asp-route-id="@item.Id"
+                       class="home-card-img-link">
+                        <div class="home-card-img">
+                            <span class="home-card-badge">New</span>
+                            <img src="@(item.ImageUrl ?? "/images/default.png")"
+                                 alt="@item.Name" />
+                        </div>
+                    </a>
+                    <div class="home-card-body">
+                        <span class="home-card-category">@item.Category?.Name</span>
+                        <h3 class="home-card-name">@item.Name</h3>
+                        <div class="home-card-footer">
+                            <span class="home-card-price">৳@item.Price.ToString("N2")</span>
+                            @if (item.Stock <= 0)
+                            {
+                                <button class="btn-soldout" disabled>Sold Out</button>
+                            }
+                            else
+                            {
+                                <form method="post"
+                                      asp-controller="Cart"
+                                      asp-action="Add">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit" class="btn-add-cart">+ Cart</button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</section>
+
+<!-- ═══════════════════════════════════════════
+     WHY KINTECH
+     ═══════════════════════════════════════════ -->
+<section class="home-section trust-section">
+    <h2 class="section-title centered">Why Kintech?</h2>
+    <div class="trust-grid">
+        <div class="trust-card">
+            <div class="trust-icon">🚚</div>
+            <h3>Fast Delivery</h3>
+            <p>Same-day dispatch on orders placed before 2 PM.</p>
+        </div>
+        <div class="trust-card">
+            <div class="trust-icon">✅</div>
+            <h3>100% Genuine</h3>
+            <p>Every product is sourced from verified suppliers.</p>
+        </div>
+        <div class="trust-card">
+            <div class="trust-icon">🔒</div>
+            <h3>Secure Checkout</h3>
+            <p>Your payment and data are always protected.</p>
+        </div>
+        <div class="trust-card">
+            <div class="trust-icon">↩️</div>
+            <h3>Easy Returns</h3>
+            <p>7-day hassle-free return policy on all orders.</p>
+        </div>
+    </div>
+</section>
+

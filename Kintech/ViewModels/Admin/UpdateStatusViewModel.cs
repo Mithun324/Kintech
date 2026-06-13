@@ -10,5 +10,5 @@ public class UpdateStatusViewModel
     public int OrderId { get; set; }
 
     [Required]
-    public OrderStatus Status { get; set; }  // ✅ enum, not raw string
+    public OrderStatus Status { get; set; }
 }

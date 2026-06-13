@@ -25,10 +25,10 @@ else
             <div class="order-header">
                 <div>
                     <strong>Order #@order.Id</strong><br />
-                    <small>@order.OrderDate.ToString("dd MMM yyyy, hh:mm tt")</small>  @* ✅ formatted *@
+                    <small>@order.OrderDate.ToString("dd MMM yyyy, hh:mm tt")</small> 
                 </div>
                 <div>
-                    <strong>৳@order.TotalAmount.ToString("N2")</strong>  @* ✅ formatted *@
+                    <strong>৳@order.TotalAmount.ToString("N2")</strong>  
                 </div>
             </div>
 
@@ -44,22 +44,20 @@ else
                 {
                     <div class="order-item">
                         <span>@item.ProductName (x@item.Quantity)</span>
-                        <span>৳@((item.Price * item.Quantity).ToString("N2"))</span>  @* ✅ formatted *@
+                        <span>৳@((item.Price * item.Quantity).ToString("N2"))</span> 
                     </div>
                 }
             </div>
 
             <div class="order-status">
 
-                @* ✅ Fix: use string variable to avoid ToLower() overload error *@
                 @{ var statusClass = order.Status.ToString().ToLowerInvariant(); }
                 <span class="status @statusClass">@order.Status</span>
 
-                @* ✅ Status updates are now POST forms, not GET links *@
                 <div class="status-actions">
                     @foreach (var status in Enum.GetValues<OrderStatus>())
                     {
-                        if (status != order.Status)  @* ✅ hide current status *@
+                        if (status != order.Status) 
                         {
                             <form method="post"
                                   asp-controller="Order"

@@ -32,15 +32,15 @@
         <div class="stats">
             <div class="card">
                 <h3>Total Products</h3>
-                <p>@Model.ProductCount</p>         @* ✅ strongly typed *@
+                <p>@Model.ProductCount</p>      
             </div>
             <div class="card">
                 <h3>Total Orders</h3>
-                <p>@Model.OrderCount</p>           @* ✅ strongly typed *@
+                <p>@Model.OrderCount</p> 
             </div>
             <div class="card">
                 <h3>Total Revenue</h3>
-                <p>৳@Model.TotalRevenue.ToString("N2")</p>  @* ✅ formatted decimal *@
+                <p>৳@Model.TotalRevenue.ToString("N2")</p>  
             </div>
         </div>
 
@@ -72,9 +72,9 @@
                             <td>@order.CustomerName</td>
                             <td>@order.CustomerEmail</td>
                             <td>৳@order.TotalAmount.ToString("N2")</td>
-                            <td>@order.OrderDate.ToString("dd MMM yyyy")</td>  @* ✅ formatted date *@
+                            <td>@order.OrderDate.ToString("dd MMM yyyy")</td> 
                             <td>
-                                <span class="status @order.Status.ToString().ToLower()">  @* ✅ enum .ToString() first *@
+                                <span class="status @order.Status.ToString().ToLower()">  
                                     @order.Status
                                 </span>
                             </td>

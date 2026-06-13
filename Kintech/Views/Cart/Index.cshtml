@@ -1,6 +1,7 @@
 ﻿@model List<Kintech.Models.CartItem>
 
 @{
+    ViewData["Title"] = "Shopping Cart";
     decimal grandTotal = 0;
 }
 
@@ -15,8 +16,11 @@
     {
         <div class="empty-cart">
             <h3>Your cart is empty</h3>
-            <a href="/Product" class="btn-checkout">
-                Continue Shopping
+
+            <a asp-controller="Product"
+               asp-action="Index"
+               class="btn-browse">
+                Browse Products
             </a>
         </div>
     }
@@ -25,14 +29,13 @@
         <div class="cart-card">
 
             <table class="table cart-table">
-
                 <thead>
                     <tr>
                         <th>Product</th>
                         <th>Price</th>
-                        <th>Quantity</th>
+                        <th style="width:180px;">Quantity</th>
                         <th>Total</th>
-                        <th></th>
+                        <th style="width:120px;"></th>
                     </tr>
                 </thead>
 
@@ -47,7 +50,8 @@
 
                             <td>
                                 <div class="cart-product">
-                                    <img src="@item.ImageUrl" alt="@item.Name" />
+                                    <img src="@item.ImageUrl"
+                                         alt="@item.Name" />
 
                                     <div>
                                         <h4>@item.Name</h4>
@@ -64,47 +68,47 @@
 
                                 <div class="qty-box">
 
-                        <!-- DECREASE -->
-                        <form method="post"
-                              asp-controller="Cart"
-                              asp-action="Decrease">
+                                    <!-- DECREASE -->
+                                    <form method="post"
+                                          asp-controller="Cart"
+                                          asp-action="Decrease">
 
-                            @Html.AntiForgeryToken()
+                                        @Html.AntiForgeryToken()
 
-                            <input type="hidden"
-                                   name="id"
-                                   value="@item.ProductId" />
+                                        <input type="hidden"
+                                               name="id"
+                                               value="@item.ProductId" />
 
-                            <button type="submit"
-                                    class="qty-btn minus">
-                                −
-                            </button>
+                                        <button type="submit"
+                                                class="qty-btn minus">
+                                            −
+                                        </button>
 
-                        </form>
+                                    </form>
 
-                        <span class="qty-number">
-                            @item.Quantity
-                        </span>
+                                    <span class="qty-number">
+                                        @item.Quantity
+                                    </span>
 
-                        <!-- INCREASE -->
-                        <form method="post"
-                              asp-controller="Cart"
-                              asp-action="Increase">
+                                    <!-- INCREASE -->
+                                    <form method="post"
+                                          asp-controller="Cart"
+                                          asp-action="Increase">
 
-                            @Html.AntiForgeryToken()
+                                        @Html.AntiForgeryToken()
 
-                            <input type="hidden"
-                                   name="id"
-                                   value="@item.ProductId" />
+                                        <input type="hidden"
+                                               name="id"
+                                               value="@item.ProductId" />
 
-                            <button type="submit"
-                                    class="qty-btn plus">
-                                +
-                            </button>
+                                        <button type="submit"
+                                                class="qty-btn plus">
+                                            +
+                                        </button>
 
-                        </form>
+                                    </form>
 
-                    </div>
+                                </div>
 
                             </td>
 
@@ -114,22 +118,23 @@
 
                             <td>
 
-                        <form method="post"
-                         asp-controller="Cart"
-                         asp-action="Remove">
+                                <form method="post"
+                                      asp-controller="Cart"
+                                      asp-action="Remove"
+                                      class="remove-form">
 
-                       @Html.AntiForgeryToken()
+                                    @Html.AntiForgeryToken()
 
-                        <input type="hidden"
-                        name="id"
-                        value="@item.ProductId" />
+                                    <input type="hidden"
+                                           name="id"
+                                           value="@item.ProductId" />
 
-                         <button type="submit"
-                         class="remove-btn">
-                          Remove
-                </button>
+                                    <button type="submit"
+                                            class="remove-btn">
+                                        Remove
+                                    </button>
 
-            </form>
+                                </form>
 
                             </td>
 
@@ -137,7 +142,6 @@
                     }
 
                 </tbody>
-
             </table>
 
         </div>
@@ -149,19 +153,21 @@
                 <h2>৳@grandTotal.ToString("N2")</h2>
             </div>
 
-          <div class="cart-actions">
+            <div class="cart-actions">
 
-    <a href="/Product"
-       class="btn-browse">
-        ← Continue Shopping
-    </a>
+                <a asp-controller="Product"
+                   asp-action="Index"
+                   class="btn-browse">
+                    ← Continue Shopping
+                </a>
 
-    <a href="/Checkout"
-       class="btn-checkout">
-        Checkout
-    </a>
+                <a asp-controller="Checkout"
+                   asp-action="Index"
+                   class="btn-checkout">
+                    Checkout
+                </a>
 
-</div>
+            </div>
 
         </div>
     }

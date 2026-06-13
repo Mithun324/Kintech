@@ -25,7 +25,7 @@ public class EditProductViewModel
     [Required(ErrorMessage = "Please select a category.")]
     public int? CategoryId { get; set; }
 
-    public string? ExistingImageUrl { get; set; }   // ✅ keep existing image
+    public string? ExistingImageUrl { get; set; }
     public IFormFile? ImageFile { get; set; }
 
     public List<SelectListItem> Categories { get; set; } = [];
