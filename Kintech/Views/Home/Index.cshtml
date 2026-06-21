@@ -9,59 +9,88 @@
      HERO BANNER
      ═══════════════════════════════════════════ -->
 <section class="hero">
-    <div class="hero-inner">
-        <div class="hero-text">
-            <span class="hero-eyebrow">New Arrivals 2025</span>
-            <h1 class="hero-title">Tech that moves<br /><em>with you</em></h1>
-            <p class="hero-sub">
-                Premium gadgets, accessories, and smart devices —
-                shipped fast across Bangladesh.
-            </p>
-            <div class="hero-actions">
-                <a asp-controller="Product" asp-action="Index" class="hero-btn-primary">
-                    Shop Now
-                </a>
-                <a asp-controller="Product" asp-action="Index" class="hero-btn-ghost">
-                    View All Products
-                </a>
+    <div class="hero-content">
+
+        <div class="hero-left">
+            <span class="hero-tag">New Collection 2025</span>
+            <h1>Upgrade Your <span>Tech Lifestyle</span></h1>
+            <p>Discover premium laptops, gaming accessories, keyboards, mice, headphones and more.</p>
+            <div class="hero-buttons">
+                <a asp-controller="Product" asp-action="Index" class="btn-primary">Shop Now</a>
+                <a asp-controller="Product" asp-action="Index" class="btn-secondary">Explore Products</a>
             </div>
         </div>
-        <div class="hero-visual">
-            <div class="hero-badge">⭐ 4.9 · 2,400+ reviews</div>
-            <img src="/images/hero-product.png"
-                 alt="Featured product"
-                 onerror="this.style.display='none'" />
+
+        <!-- Slider -->
+        <div class="hero-right hero-slider">
+            <div class="slider-track" id="heroSliderTrack">
+                <div class="slide"><img src="/images/HomePage/HomeProductImg.png" alt="Product 1" /></div>
+                <div class="slide"><img src="/images/HomePage/HomeProductImg-1.png" alt="Product 2" /></div>
+                <div class="slide"><img src="/images/HomePage/HomeProductImg-2.png" alt="Product 3" /></div>
+                <div class="slide"><img src="/images/HomePage/HomeProductImg-3.png" alt="Product 4" /></div>
+                <div class="slide"><img src="/images/amzefitwatch1.jpg" alt="Product 5" /></div>
+            </div>
+            <!-- Dots -->
+            <div class="slider-dots" id="sliderDots"></div>
         </div>
+
     </div>
+    <script src="~/js/site.js"></script>
 </section>
 
 <!-- ═══════════════════════════════════════════
      CATEGORY PILLS
      ═══════════════════════════════════════════ -->
-<section class="home-section">
-    <div class="section-header">
-        <h2 class="section-title">Shop by Category</h2>
-        <a asp-controller="Product" asp-action="Index" class="see-all">See all →</a>
-    </div>
-    <div class="cat-pills">
-        @foreach (var cat in Model.Categories)
-        {
+<section class="category-showcase">
+
+    <div class="category-large">
+        <img src="/images/HomePage/HomeProductImg.png" class="category-bg">
+
+        <div class="category-content">
+            <h3>Gaming Gear</h3>
+            <p>Professional gaming setup</p>
+
             <a asp-controller="Product"
-               asp-action="Index"
-               asp-route-categoryId="@cat.Id"
-               class="cat-pill">
-                @cat.Name
+               asp-action="Index">
+                Shop Now
             </a>
-        }
+        </div>
     </div>
+
+    <div class="category-small-grid">
+
+        <div class="category-box">
+            <img src="/images/HomePage/HomeProductImg.png" class="category-bg">
+            <h3>Laptops</h3>
+        </div>
+
+        <div class="category-box">
+            <img src="/images/78f917a3-c529-44ff-be0d-6cf6755aacc7.jpg" class="category-bg">
+            <h3>Accessories</h3>
+        </div>
+
+        <div class="category-box">
+            <img src="/images/HomePage/HomeProductImg-1.png" class="category-bg">
+            <h3>Keyboards</h3>
+        </div>
+
+        <div class="category-box">
+            <img src="/images/ada9090f-10be-4505-b44b-2db0ce427096.jpg" class="category-bg">
+            <h3>Deals</h3>
+        </div>
+
+    </div>
+
 </section>
 
 <!-- ═══════════════════════════════════════════
      FEATURED PRODUCTS
      ═══════════════════════════════════════════ -->
 <section class="home-section">
-    <div class="section-header">
-        <h2 class="section-title">Featured Products</h2>
+    <div>
+    <h2 class="section-title">
+    Trending Products
+</h2>
         <a asp-controller="Product" asp-action="Index" class="see-all">See all →</a>
     </div>
 
@@ -110,31 +139,65 @@
         <p class="no-products">No featured products yet.</p>
     }
 </section>
+<!-- ═══════════════════════════════════════════
+     Sale
+     ═══════════════════════════════════════════ -->
+
+<section class="flash-sale">
+
+    <div class="flash-content">
+
+        <span>Deal of the Week</span>
+
+        <h2>
+            Save Up To 40% On Selected Products
+        </h2>
+
+        <p>
+            Limited time technology offers.
+        </p>
+
+        <a asp-controller="Product"
+           asp-action="Index"
+           class="promo-btn">
+            Shop Deals
+        </a>
+
+    </div>
+
+</section>
 
 <!-- ═══════════════════════════════════════════
-     PROMO BANNER
+     WHY KINTECH
      ═══════════════════════════════════════════ -->
-<section class="promo-banner">
-    <div class="promo-inner">
-        <div class="promo-text">
-            <span class="promo-label">Limited Time</span>
-            <h2>Free delivery on orders over ৳2,000</h2>
-            <p>Shop our full range of accessories, audio, and wearables.</p>
-            <a asp-controller="Product" asp-action="Index" class="promo-btn">Shop Now</a>
+<section class="home-section trust-section">
+    <h2 class="section-title centered">Why Kintech?</h2>
+    <div class="trust-grid">
+        <div class="trust-card">
+            <div class="trust-icon">🚚</div>
+            <h3>Fast Delivery</h3>
+            <p>Same-day dispatch on orders placed before 2 PM.</p>
         </div>
-        <div class="promo-stats">
-            <div class="promo-stat">
-                <strong>5,000+</strong>
-                <span>Happy Customers</span>
-            </div>
-            <div class="promo-stat">
-                <strong>500+</strong>
-                <span>Products</span>
-            </div>
-            <div class="promo-stat">
-                <strong>24h</strong>
-                <span>Fast Delivery</span>
-            </div>
+        <div class="trust-card">
+            <div class="trust-icon">✅</div>
+            <h3>100% Genuine</h3>
+            <p>Every product is sourced from verified suppliers.</p>
+        </div>
+        <div class="trust-card">
+            <div class="trust-icon">🔒</div>
+            <h3>Secure Checkout</h3>
+            <p>Your payment and data are always protected.</p>
+        </div>
+        <div class="trust-card">
+            <div class="trust-icon">↩️</div>
+            <h3>Easy Returns</h3>
+            <p>7-day hassle-free return policy on all orders.</p>
+        </div>
+
+        <div class="trust-card">
+            <div class="trust-icon">↩️</div>
+            <h3>Delivery Choice</h3>
+            <p>You get to choose your Delivey Time.</p>
         </div>
     </div>
 </section>
@@ -190,33 +253,33 @@
         </div>
     }
 </section>
-
 <!-- ═══════════════════════════════════════════
-     WHY KINTECH
+     PROMO BANNER
      ═══════════════════════════════════════════ -->
-<section class="home-section trust-section">
-    <h2 class="section-title centered">Why Kintech?</h2>
-    <div class="trust-grid">
-        <div class="trust-card">
-            <div class="trust-icon">🚚</div>
-            <h3>Fast Delivery</h3>
-            <p>Same-day dispatch on orders placed before 2 PM.</p>
+<section class="promo-banner">
+    <div class="promo-inner">
+        <div class="promo-text">
+            <span class="promo-label">Limited Time</span>
+            <h2>Free delivery on orders over ৳2,000</h2>
+            <p>Shop our full range of accessories, audio, and wearables.</p>
+            <a asp-controller="Product" asp-action="Index" class="promo-btn">Shop Now</a>
         </div>
-        <div class="trust-card">
-            <div class="trust-icon">✅</div>
-            <h3>100% Genuine</h3>
-            <p>Every product is sourced from verified suppliers.</p>
-        </div>
-        <div class="trust-card">
-            <div class="trust-icon">🔒</div>
-            <h3>Secure Checkout</h3>
-            <p>Your payment and data are always protected.</p>
-        </div>
-        <div class="trust-card">
-            <div class="trust-icon">↩️</div>
-            <h3>Easy Returns</h3>
-            <p>7-day hassle-free return policy on all orders.</p>
+        <div class="promo-stats">
+            <div class="promo-stat">
+                <strong>5,000+</strong>
+                <span>Happy Customers</span>
+            </div>
+            <div class="promo-stat">
+                <strong>500+</strong>
+                <span>Products</span>
+            </div>
+            <div class="promo-stat">
+                <strong>24h</strong>
+                <span>Fast Delivery</span>
+            </div>
         </div>
     </div>
 </section>
+
+
 

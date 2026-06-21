@@ -2,35 +2,39 @@
 <html>
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <title>Kintech</title>
 
     <link rel="stylesheet" href="~/css/site.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap"
+          rel="stylesheet">
 </head>
 
 <body>
 
+    <!-- NAVBAR -->
     <nav class="navbar-premium">
 
-        <!-- LEFT -->
+        <!-- LOGO -->
         <div class="nav-left">
-            <a href="/Product" class="logo">Kintech</a>
+            <a href="/" class="logo">Kintech</a>
         </div>
 
-        <!-- RIGHT -->
+        <!-- MENU -->
         <div class="nav-right">
+
+            <a href="/">Home</a>
 
             <a href="/Product">Products</a>
 
-           <a href="/Cart" class="cart-link">
-
-               
-    🛒 Cart
-    <span id="cartCount" class="cart-badge">0</span> </a>
-        <div class="container-fluid">
+            <a href="/Cart" class="cart-link">
+                🛒 Cart
+                <span id="cartCount" class="cart-badge">0</span>
+            </a>
 
             @if (User.IsInRole("Admin"))
             {
@@ -39,9 +43,17 @@
 
             @if (User.Identity.IsAuthenticated)
             {
-                <form method="post" asp-controller="Account" asp-action="Logout" class="logout-form">
+                <form method="post"
+                      asp-controller="Account"
+                      asp-action="Logout"
+                      class="logout-form">
+
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="btn-logout">Logout</button>
+
+                    <button type="submit" class="btn-logout">
+                        Logout
+                    </button>
+
                 </form>
             }
             else
@@ -53,37 +65,36 @@
 
     </nav>
 
-    
-    @RenderBody()
-        
-</div>
+    <!-- PAGE CONTENT -->
+    <main>
+        @RenderBody()
+    </main>
 
+    <!-- FOOTER -->
     <partial name="_Footer" />
 
     @RenderSection("Scripts", required: false)
 
-
     <script>
+        async function loadCartCount() {
+            try {
+                const response = await fetch('/Cart/Count');
+                const count = await response.json();
 
-async function loadCartCount() {
+                const cartElement = document.getElementById('cartCount');
 
-    try {
+                if (cartElement) {
+                    cartElement.innerText = count;
+                }
+            }
+            catch (e) {
+                console.error(e);
+            }
+        }
 
-        const response = await fetch('/Cart/Count');
+        loadCartCount();
+    </script>
 
-        const count = await response.json();
-
-        document.getElementById('cartCount').innerText = count;
-
-    }
-    catch (e) {
-        console.error(e);
-    }
-}
-
-      
-loadCartCount();
-</script>
-
+  
 </body>
 </html>
