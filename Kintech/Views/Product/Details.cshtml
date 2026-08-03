@@ -1,0 +1,79 @@
+﻿@model Kintech.Models.Product
+
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<section class="product-details">
+
+    <div class="details-container">
+
+        <div class="details-image">
+
+            <img src="@(Model.ImageUrl ?? "/images/default.png")"
+                 alt="@Model.Name">
+
+        </div>
+
+        <div class="details-info">
+
+            @if (Model.Category != null)
+            {
+                <span class="category">
+                    @Model.Category.Name
+                </span>
+            }
+
+            <h1>@Model.Name</h1>
+
+            <h2>৳@Model.Price.ToString("N2")</h2>
+
+            <p>
+                @(string.IsNullOrWhiteSpace(Model.Description)
+                    ? "No description available."
+                    : Model.Description)
+            </p>
+
+            <p>
+
+                <strong>Stock :</strong>
+
+                @if (Model.Stock > 0)
+                {
+                    <span class="stock available">
+                        In Stock (@Model.Stock)
+                    </span>
+                }
+                else
+                {
+                    <span class="stock sold">
+                        Out of Stock
+                    </span>
+                }
+
+            </p>
+
+            @if (Model.Stock > 0)
+            {
+                <form asp-controller="Cart"
+                      asp-action="Add"
+                      method="post">
+
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden"
+                           name="id"
+                           value="@Model.Id" />
+
+                    <button class="btn-add-cart">
+                        Add to Cart
+                    </button>
+
+                </form>
+            }
+
+        </div>
+
+    </div>
+
+</section>

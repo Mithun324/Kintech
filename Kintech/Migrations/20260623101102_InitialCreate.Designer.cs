@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Kintech.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260509180159_ConvertStatusToString")]
-    partial class ConvertStatusToString
+    [Migration("20260623101102_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -302,6 +302,52 @@ namespace Kintech.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Kintech.Models.DeliverySlot", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("TimeSlot")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DeliverySlots");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            IsActive = true,
+                            TimeSlot = "9 AM - 12 PM"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            IsActive = true,
+                            TimeSlot = "12 PM - 3 PM"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            IsActive = true,
+                            TimeSlot = "3 PM - 6 PM"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            IsActive = true,
+                            TimeSlot = "6 PM - 9 PM"
+                        });
+                });
+
             modelBuilder.Entity("Kintech.Models.Order", b =>
                 {
                     b.Property<int>("Id")
@@ -320,6 +366,12 @@ namespace Kintech.Migrations
                     b.Property<string>("CustomerName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("DeliveryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DeliverySlotId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("datetime2");
 
@@ -337,6 +389,8 @@ namespace Kintech.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DeliverySlotId");
 
                     b.ToTable("Orders");
                 });
@@ -551,6 +605,15 @@ namespace Kintech.Migrations
                     b.Navigation("Parent");
                 });
 
+            modelBuilder.Entity("Kintech.Models.Order", b =>
+                {
+                    b.HasOne("Kintech.Models.DeliverySlot", "DeliverySlot")
+                        .WithMany("Orders")
+                        .HasForeignKey("DeliverySlotId");
+
+                    b.Navigation("DeliverySlot");
+                });
+
             modelBuilder.Entity("Kintech.Models.OrderItem", b =>
                 {
                     b.HasOne("Kintech.Models.Order", "Order")
@@ -629,6 +692,11 @@ namespace Kintech.Migrations
                     b.Navigation("Products");
 
                     b.Navigation("SubCategories");
+                });
+
+            modelBuilder.Entity("Kintech.Models.DeliverySlot", b =>
+                {
+                    b.Navigation("Orders");
                 });
 
             modelBuilder.Entity("Kintech.Models.Order", b =>
