@@ -25,62 +25,98 @@
         }
     </div>
 
-    <!-- RIGHT SIDE: PRODUCTS -->
-    <div class="products">
-        @if (!Model.Products.Any())
-        {
-            <p class="no-products">No products found.</p>
-        }
-        else
-        {
-            <div class="grid">
-                @foreach (var item in Model.Products)
-                {
-                    <div class="card">
+   <!-- RIGHT SIDE: PRODUCTS -->
+<div class="products">
+
+    @if (!Model.Products.Any())
+    {
+        <p class="no-products">No products found.</p>
+    }
+    else
+    {
+        <div class="grid">
+
+            @foreach (var item in Model.Products)
+            {
+                <div class="card">
+
+                    <!-- Clickable Product -->
+                    <a asp-controller="Product"
+                       asp-action="Details"
+                       asp-route-id="@item.Id"
+                       class="product-link">
+
                         <div class="home-card-img">
                             <img src="@(item.ImageUrl ?? "/images/default.png")"
                                  alt="@item.Name" />
                         </div>
-                        <div class="home-card-body">
-                            <h3 class="home-card-name">@item.Name</h3>
-                            <p class="home-card-price">৳@item.Price.ToString("N2")</p>
 
-                            @* ✅ Stock badge *@
+                        <div class="home-card-body">
+
+                            <h3 class="home-card-name">
+                                @item.Name
+                            </h3>
+
+                            <p class="home-card-price">
+                                ৳@item.Price.ToString("N2")
+                            </p>
+
                             @if (item.Stock <= 0)
                             {
-                                <span class="stock sold-out">Sold Out</span>
+                                <span class="stock sold-out">
+                                    Sold Out
+                                </span>
                             }
                             else if (item.Stock < 10)
                             {
-                                <span class="stock low-stock">Only @item.Stock left</span>
+                                <span class="stock low-stock">
+                                    Only @item.Stock left
+                                </span>
                             }
                             else
                             {
-                                <span class="stock in-stock">In Stock (@item.Stock)</span>
+                                <span class="stock in-stock">
+                                    In Stock (@item.Stock)
+                                </span>
                             }
 
-                            @* ✅ Single clean Add to Cart block *@
-                            @if (item.Stock <= 0)
-                            {
-                                <button class="btn-soldout" disabled>Sold Out</button>
-                            }
-                            else
-                            {
-                                <form method="post"
-                                      asp-controller="Cart"
-                                      asp-action="Add">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="id" value="@item.Id" />
-                                    <button type="submit" class="btn-add-cart">
-                                        Add to Cart
-                                    </button>
-                                </form>
-                            }
                         </div>
-                    </div>
-                }
-            </div>
+
+                    </a>
+
+                    @if (item.Stock <= 0)
+                    {
+                        <button class="btn-soldout" disabled>
+                            Sold Out
+                        </button>
+                    }
+                    else
+                    {
+                        <form method="post"
+                              asp-controller="Cart"
+                              asp-action="Add">
+
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden"
+                                   name="id"
+                                   value="@item.Id" />
+
+                            <button type="submit"
+                                    class="btn-add-cart">
+                                Add to Cart
+                            </button>
+
+                        </form>
+                    }
+
+                </div>
+            }
+
+        </div>
+    }
+
+</div>
         }
     </div>
 
-</div>

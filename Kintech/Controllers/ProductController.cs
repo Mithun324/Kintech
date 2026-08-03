@@ -8,13 +8,13 @@ namespace Kintech.Controllers;
 
 public class ProductController : Controller
 {
-    private readonly IProductService _productService;       // ✅ interface
-    private readonly ICategoryService _categoryService;     // ✅ service not DbContext
+    private readonly IProductService _productService;
+    private readonly ICategoryService _categoryService;
     private readonly IWebHostEnvironment _env;
     private readonly ILogger<ProductController> _logger;
 
     private static readonly string[] AllowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
-    private const long MaxImageSizeBytes = 5 * 1024 * 1024; // 5MB
+    private const long MaxImageSizeBytes = 5 * 1024 * 1024;
 
     public ProductController(
         IProductService productService,
@@ -57,7 +57,7 @@ public class ProductController : Controller
 
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    [ValidateAntiForgeryToken]                              // ✅ CSRF protection
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateProductViewModel vm)
     {
         if (!ModelState.IsValid)
@@ -144,7 +144,7 @@ public class ProductController : Controller
                 return View(vm);
             }
 
-            DeleteImageFile(product.ImageUrl);              // ✅ remove old image
+            DeleteImageFile(product.ImageUrl);
             product.ImageUrl = result;
         }
 
@@ -164,7 +164,7 @@ public class ProductController : Controller
     }
 
     // ===================== DELETE =====================
-    [HttpPost]                                              // ✅ must be POST
+    [HttpPost]
     [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
@@ -172,7 +172,7 @@ public class ProductController : Controller
         var product = await _productService.GetByIdAsync(id);
         if (product is null) return NotFound();
 
-        DeleteImageFile(product.ImageUrl);                  // ✅ clean up file
+        DeleteImageFile(product.ImageUrl);
 
         await _productService.DeleteAsync(id);
 
@@ -199,14 +199,14 @@ public class ProductController : Controller
     {
         var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
 
-        if (!AllowedExtensions.Contains(ext))               // ✅ extension check
+        if (!AllowedExtensions.Contains(ext))
             return (false, "Only .jpg, .jpeg, .png, .webp files are allowed.");
 
-        if (file.Length > MaxImageSizeBytes)                // ✅ size check
+        if (file.Length > MaxImageSizeBytes)  
             return (false, "Image must be under 5MB.");
 
         string folder = Path.Combine(_env.WebRootPath, "images");
-        Directory.CreateDirectory(folder);                  // no-op if exists
+        Directory.CreateDirectory(folder); 
 
         string fileName = Guid.NewGuid() + ext;
         string path = Path.Combine(folder, fileName);
@@ -225,4 +225,16 @@ public class ProductController : Controller
         if (System.IO.File.Exists(path))
             System.IO.File.Delete(path);
     }
+
+    // ===================== DETAILS =====================
+    public async Task<IActionResult> Details(int id)
+    {
+        var product = await _productService.GetByIdAsync(id);
+
+        if (product == null)
+            return NotFound();
+
+        return View(product);
+    }
+
 }

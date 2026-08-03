@@ -202,6 +202,7 @@ body {
     display: flex;
     flex-direction: column;
     box-shadow: 0 4px 10px rgba(15,23,42,0.04), 0 10px 25px rgba(15,23,42,0.06);
+   
 }
 
     .card::before {
@@ -224,6 +225,9 @@ body {
     .card:hover img {
         transform: scale(1.04);
     }
+    .card:hover .home-card-img img {
+        transform: scale(1.06);
+    }
 
     .card h3 {
         font-size: 16px;
@@ -232,6 +236,10 @@ body {
         color: var(--text-1);
         margin: 18px 18px 6px;
         min-height: 46px;
+    }
+    .card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 30px rgba(0,0,0,.12);
     }
 
 /* ===== PRICE ===== */
@@ -2531,4 +2539,101 @@ textarea.form-control {
         .footer-inner {
             grid-template-columns: 1fr;
         }
+    }
+
+/* ===== Product Details ===== */
+
+.product-details {
+    max-width: 1200px;
+    margin: 70px auto;
+    padding: 0 30px;
+}
+
+.details-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 70px;
+    align-items: center;
+}
+
+.details-image {
+    background: #fff;
+    border-radius: 18px;
+    padding: 40px;
+    box-shadow: 0 15px 40px rgba(0,0,0,.08);
+}
+
+    .details-image img {
+        width: 100%;
+        height: 500px;
+        object-fit: contain;
+    }
+
+.details-info h1 {
+    font-size: 42px;
+    margin: 20px 0;
+}
+
+.details-info h2 {
+    color: #2563eb;
+    font-size: 34px;
+    margin-bottom: 20px;
+}
+
+.category {
+    display: inline-block;
+    background: #eef2ff;
+    color: #2563eb;
+    padding: 8px 15px;
+    border-radius: 20px;
+    margin-bottom: 15px;
+}
+
+.stock.available {
+    color: #16a34a;
+    font-weight: 700;
+}
+
+.stock.sold {
+    color: #dc2626;
+    font-weight: 700;
+}
+
+.btn-add-cart {
+    margin-top: 30px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 17px;
+}
+
+    .btn-add-cart:hover {
+        background: #1d4ed8;
+    }
+
+@media(max-width:900px) {
+
+    .details-container {
+        grid-template-columns: 1fr;
+    }
+
+    .details-image img {
+        height: 350px;
+    }
+}
+.product-link .home-card-img img {
+    transition: .3s;
+}
+.product-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+    .product-link:hover {
+        text-decoration: none;
+        color: inherit;
     }
