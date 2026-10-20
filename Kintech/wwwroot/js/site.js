@@ -1,61 +1,86 @@
-﻿
-document.addEventListener('DOMContentLoaded', function () {
-    const track = document.getElementById('heroSliderTrack');
-    const dotsContainer = document.getElementById('sliderDots');
-    let slides = track.querySelectorAll('.slide');
-    let currentIndex = 0;
-    let intervalId = null;
-    const totalSlides = slides.length;
+﻿let currentSlide = 0;
+let slides = [];
+let dots = [];
+let slideInterval;
 
-  
-    slides.forEach((_, i) => {
-        const dot = document.createElement('span');
-        if (i === 0) dot.classList.add('active');
-        dot.dataset.index = i;
-        dot.addEventListener('click', () => goToSlide(i));
-        dotsContainer.appendChild(dot);
-    });
+document.addEventListener("DOMContentLoaded", function () {
+    slides = document.querySelectorAll(".hero-slide");
+    dots = document.querySelectorAll(".hero-dot");
 
-    const dots = dotsContainer.querySelectorAll('span');
+    if (slides.length > 0) {
+        startSlider();
 
-    function goToSlide(index) {
-        if (index < 0) index = totalSlides - 1;
-        if (index >= totalSlides) index = 0;
-        currentIndex = index;
-        track.style.transform = `translateX(-${currentIndex * 100}%)`;
-        dots.forEach((dot, i) => {
-            dot.classList.toggle('active', i === currentIndex);
-        });
-    }
+        const stage = document.getElementById("hero3DStage");
+        const tiltCard = document.getElementById("hero3DTiltCard");
 
-    function nextSlide() {
-        goToSlide(currentIndex + 1);
-    }
+        if (stage) {
+            stage.addEventListener("mouseenter", stopSlider);
+            stage.addEventListener("mouseleave", function () {
+                startSlider();
+                if (tiltCard) {
+                    tiltCard.style.transform = "rotateY(-8deg) rotateX(4deg)";
+                }
+            });
 
-    function startAutoPlay() {
-        if (intervalId) clearInterval(intervalId);
-        intervalId = setInterval(nextSlide, 2000);
-    }
+            // Interactive 3D Mouse Perspective Tilt
+            stage.addEventListener("mousemove", function (e) {
+                if (!tiltCard || window.innerWidth < 992) return;
+                const rect = stage.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
 
-    function stopAutoPlay() {
-        if (intervalId) {
-            clearInterval(intervalId);
-            intervalId = null;
+                const rotateY = ((x - centerX) / centerX) * 10;
+                const rotateX = ((centerY - y) / centerY) * 8;
+
+                tiltCard.style.transform = `rotateY(${rotateY.toFixed(2)}deg) rotateX(${rotateX.toFixed(2)}deg)`;
+            });
         }
     }
-
-    const slider = document.querySelector('.hero-slider');
-    slider.addEventListener('mouseenter', stopAutoPlay);
-    slider.addEventListener('mouseleave', startAutoPlay);
-
-    startAutoPlay();
-
-    dots.forEach(dot => {
-        dot.addEventListener('click', () => {
-            stopAutoPlay();
-            goToSlide(parseInt(dot.dataset.index));
-            startAutoPlay();
-        });
-    });
 });
 
+function startSlider() {
+    stopSlider();
+    slideInterval = setInterval(nextSlide, 3800);
+}
+document.addEventListener("visibilitychange", function () {
+    document.hidden ? stopSlider() : startSlider();
+});
+
+function stopSlider() {
+    if (slideInterval) {
+        clearInterval(slideInterval);
+    }
+}
+
+function showSlide(index) {
+    if (!slides.length) return;
+    slides.forEach(s => s.classList.remove("active"));
+    dots.forEach(d => d.classList.remove("active"));
+
+    slides[index].classList.add("active");
+    if (dots[index]) {
+        dots[index].classList.add("active");
+    }
+
+    currentSlide = index;
+}
+
+function nextSlide() {
+    if (!slides.length) return;
+    let next = (currentSlide + 1) % slides.length;
+    showSlide(next);
+}
+
+function prevSlide() {
+    if (!slides.length) return;
+    let prev = (currentSlide - 1 + slides.length) % slides.length;
+    showSlide(prev);
+    startSlider();
+}
+
+function goToSlide(index) {
+    showSlide(index);
+    startSlider();
+}

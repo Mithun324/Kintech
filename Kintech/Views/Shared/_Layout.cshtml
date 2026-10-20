@@ -1,100 +1,107 @@
-﻿<!DOCTYPE html>
-<html>
+﻿@using Kintech.Helpers
+@using Kintech.Models
+@{
+    var cart = Context.Session.GetObjectFromJson<List<CartItem>>("Cart");
+    int cartCount = cart != null ? cart.Sum(c => c.Quantity) : 0;
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+}
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-    <title>Kintech</title>
-
-    <link rel="stylesheet" href="~/css/site.css" />
-
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap"
-          rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Kintech</title>
+    <script type="importmap"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/product.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Kintech.styles.css" asp-append-version="true" />
 </head>
-
-<body>
-
-    <!-- NAVBAR -->
-    <nav class="navbar-premium">
-
-        <!-- LOGO -->
-        <div class="nav-left">
-            <a href="/" class="logo">Kintech</a>
+<body class="theme-electric-aurora">
+    <!-- Top Promo Strip -->
+    <div class="kt-promo-strip">
+        <div class="kt-promo-inner">
+            <span class="kt-promo-live">
+                <span class="kt-pulse-dot"></span>
+                <strong>Eid &amp; Summer Tech Fest:</strong> Save up to 40% on Gaming &amp; Audio Gear
+            </span>
+            <span class="kt-promo-sep">|</span>
+            <span class="kt-promo-ship">🚚 Free Delivery Across Bangladesh on Orders Over <strong>৳2,000</strong></span>
+            <a href="/Product" class="kt-promo-cta">Shop All Products →</a>
         </div>
+    </div>
 
-        <!-- MENU -->
-        <div class="nav-right">
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-light kt-navbar">
+            <div class="container-fluid px-4">
+                <a class="navbar-brand kt-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    <span class="kt-brand-mark">K</span>
+                    <span class="kt-brand-text">Kin<span class="kt-brand-gradient">tech</span></span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1 gap-1">
+                        <li class="nav-item">
+                            <a class="nav-link kt-nav-link @(currentController == "Home" ? "active" : "")" href="/">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link kt-nav-link @(currentController == "Product" ? "active" : "")" href="/Product">Products</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link kt-nav-link @(currentController == "Cart" ? "active" : "")" href="/Cart">
+                                🛒 Cart
+                                @if (cartCount > 0)
+                                {
+                                    <span class="badge kt-cart-badge">@cartCount</span>
+                                }
+                            </a>
+                        </li>
+                        @if (Context.Session.GetString("Role") == "Admin")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link kt-nav-link kt-nav-admin @(currentController == "Admin" ? "active" : "")" href="/Admin">⚡ Admin</a>
+                            </li>
+                        }
+                    </ul>
+                    <ul class="navbar-nav align-items-center gap-2">
+                        @if (Context.Session.GetString("UserName") != null)
+                        {
+                            <li class="nav-item">
+                                <span class="nav-link kt-user-greeting">Hi, @Context.Session.GetString("UserName")</span>
+                            </li>
+                            <li class="nav-item">
+                                <a class="btn kt-btn-outline-sm" href="/Account/Logout">Logout</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="btn kt-btn-primary-sm" href="/Account/Login">Login</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
 
-            <a href="/">Home</a>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
 
-            <a href="/Product">Products</a>
-
-            <a href="/Cart" class="cart-link">
-                🛒 Cart
-                <span id="cartCount" class="cart-badge">0</span>
-            </a>
-
-            @if (User.IsInRole("Admin"))
-            {
-                <a href="/Admin">Admin</a>
-            }
-
-            @if (User.Identity.IsAuthenticated)
-            {
-                <form method="post"
-                      asp-controller="Account"
-                      asp-action="Logout"
-                      class="logout-form">
-
-                    @Html.AntiForgeryToken()
-
-                    <button type="submit" class="btn-logout">
-                        Logout
-                    </button>
-
-                </form>
-            }
-            else
-            {
-                <a href="/Account/Login">Login</a>
-            }
-
-        </div>
-
-    </nav>
-
-    <!-- PAGE CONTENT -->
-    <main>
-        @RenderBody()
-    </main>
-
-    <!-- FOOTER -->
     <partial name="_Footer" />
 
-    @RenderSection("Scripts", required: false)
-
-    <script>
-        async function loadCartCount() {
-            try {
-                const response = await fetch('/Cart/Count');
-                const count = await response.json();
-
-                const cartElement = document.getElementById('cartCount');
-
-                if (cartElement) {
-                    cartElement.innerText = count;
-                }
-            }
-            catch (e) {
-                console.error(e);
-            }
-        }
-
-        loadCartCount();
-    </script>
-
-  
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

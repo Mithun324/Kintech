@@ -34,6 +34,7 @@ builder.Services.AddSession();
 
 var app = builder.Build();
 
+
 app.UseStaticFiles();
 app.UseRouting();
 

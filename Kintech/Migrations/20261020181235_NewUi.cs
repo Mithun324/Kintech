@@ -5,7 +5,7 @@
 namespace Kintech.Migrations
 {
     /// <inheritdoc />
-    public partial class May10 : Migration
+    public partial class NewUi : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
