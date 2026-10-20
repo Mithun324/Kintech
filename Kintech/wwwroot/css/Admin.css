@@ -1013,3 +1013,65 @@ h1 {
         padding: 20px;
     }
 }
+
+
+
+.dashboard-panel {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+    margin-top: 30px;
+    box-shadow: var(--shadow-sm);
+}
+
+.page-header {
+    margin-bottom: 30px;
+}
+
+    .page-header h1 {
+        margin-bottom: 5px;
+    }
+
+    .page-header p {
+        color: var(--text-3);
+        font-size: 14px;
+    }
+
+.panel-header {
+    margin-bottom: 18px;
+}
+
+.chart-wrapper {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+    margin-top: 30px;
+    box-shadow: var(--shadow-sm);
+}
+
+.card {
+    min-height: 140px;
+}
+
+    .card p {
+        margin-top: 10px;
+    }
+
+.admin-table {
+    margin-top: 10px;
+}
+
+    .admin-table tbody tr:hover {
+        background: #fafcff;
+    }
+
+.empty-state h3 {
+    color: var(--text-1);
+}
+
+.chart-container {
+    height: 350px;
+    position: relative;
+}

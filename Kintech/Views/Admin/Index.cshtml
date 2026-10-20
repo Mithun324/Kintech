@@ -1,119 +1,189 @@
 ﻿@model Kintech.ViewModels.Admin.DashboardViewModel
 
-<link rel="stylesheet" href="/css/admin.css" />
+@{
+    Layout = "_AdminLayout";
+}
 
-<div class="admin-container">
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-        <h2>Kintech</h2>
-        <ul>
-            <li><a href="/Admin">Dashboard</a></li>
-            <li><a href="/Admin/Products">Products</a></li>
-            <li><a href="/Admin/Orders">Orders</a></li>
-        </ul>
-    </aside>
-
-    <!-- MAIN CONTENT -->
-    <main class="main-content">
-        <h1>Admin Dashboard</h1>
-
-        <!-- ALERTS -->
-        @if (TempData["Success"] != null)
-        {
-            <div class="alert alert-success">@TempData["Success"]</div>
-        }
-        @if (TempData["Error"] != null)
-        {
-            <div class="alert alert-error">@TempData["Error"]</div>
-        }
-
-        <!-- STATS -->
-        <div class="stats">
-            <div class="card">
-                <h3>Total Products</h3>
-                <p>@Model.ProductCount</p>      
-            </div>
-            <div class="card">
-                <h3>Total Orders</h3>
-                <p>@Model.OrderCount</p> 
-            </div>
-            <div class="card">
-                <h3>Total Revenue</h3>
-                <p>৳@Model.TotalRevenue.ToString("N2")</p>  
-            </div>
-        </div>
-
-        <!-- RECENT ORDERS -->
-        <h2 class="section-title">Recent Orders</h2>
-
-        @if (!Model.RecentOrders.Any())
-        {
-            <p>No orders yet.</p>
-        }
-        else
-        {
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Customer</th>
-                        <th>Email</th>
-                        <th>Total</th>
-                        <th>Date</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var order in Model.RecentOrders)
-                    {
-                        <tr>
-                            <td>#@order.Id</td>
-                            <td>@order.CustomerName</td>
-                            <td>@order.CustomerEmail</td>
-                            <td>৳@order.TotalAmount.ToString("N2")</td>
-                            <td>@order.OrderDate.ToString("dd MMM yyyy")</td> 
-                            <td>
-                                <span class="status @order.Status.ToString().ToLower()">  
-                                    @order.Status
-                                </span>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        }
-
-        <!-- QUICK ACTIONS -->
-        <div class="actions">
-            <a href="/Product/Create" class="btn">+ Add Product</a>
-            <a href="/Admin/Orders" class="btn">View Orders</a>
-        </div>
-
-        <!-- CHART -->
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <canvas id="revenueChart" height="100"></canvas>
-        <script>
-            var ctx = document.getElementById('revenueChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Total Revenue'],
-                    datasets: [{
-                        label: 'Revenue (৳)',
-                        data: [@Model.TotalRevenue],  @* ✅ strongly typed *@
-                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: true }
-                    }
-                }
-            });
-        </script>
-
-    </main>
+<div class="page-header">
+    <div>
+        <h1>Dashboard Overview</h1>
+        <p>
+            Monitor products, orders, and revenue from one place.
+        </p>
+    </div>
 </div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Success"]
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-error">
+        @TempData["Error"]
+    </div>
+}
+
+<!-- STATS -->
+<div class="stats">
+
+    <div class="card blue">
+        <h3>Total Products</h3>
+        <p>@Model.ProductCount</p>
+    </div>
+
+    <div class="card orange">
+        <h3>Total Orders</h3>
+        <p>@Model.OrderCount</p>
+    </div>
+
+    <div class="card green">
+        <h3>Total Revenue</h3>
+        <p>৳@Model.TotalRevenue.ToString("N2")</p>
+    </div>
+
+</div>
+
+<!-- QUICK ACTIONS -->
+<div class="actions">
+
+    <a href="/Admin/Products/Create"
+       class="btn-create">
+        + Add Product
+    </a>
+
+    <a href="/Admin/Orders"
+       class="btn-secondary">
+        View Orders
+    </a>
+
+</div>
+
+<!-- RECENT ORDERS -->
+<div class="dashboard-panel">
+
+    <div class="panel-header">
+        <h2 class="section-title">
+            Recent Orders
+        </h2>
+    </div>
+
+    @if (!Model.RecentOrders.Any())
+    {
+        <div class="empty-state">
+            <h3>No Orders Yet</h3>
+            <p>Your recent orders will appear here.</p>
+        </div>
+    }
+    else
+    {
+        <table class="admin-table">
+
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Email</th>
+                    <th>Total</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                @foreach (var order in Model.RecentOrders)
+                {
+                    <tr>
+
+                        <td>#@order.Id</td>
+
+                        <td>@order.CustomerName</td>
+
+                        <td>@order.CustomerEmail</td>
+
+                        <td>
+                            ৳@order.TotalAmount.ToString("N2")
+                        </td>
+
+                        <td>
+                            @order.OrderDate.ToString("dd MMM yyyy")
+                        </td>
+
+                        <td>
+                            <span class="status @order.Status.ToString().ToLower()">
+                                @order.Status
+                            </span>
+                        </td>
+
+                    </tr>
+                }
+
+            </tbody>
+
+        </table>
+    }
+
+</div>
+
+@* <!-- REVENUE CHART -->
+<div class="chart-wrapper">
+
+    <h2 class="section-title">
+        Revenue Analytics
+    </h2>
+
+ <div class="chart-container">
+    <canvas id="revenueChart"></canvas>
+</div>
+
+</div>
+
+@section Scripts {
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+    const ctx = document.getElementById('revenueChart');
+
+    new Chart(ctx, {
+
+        type: 'bar',
+
+        data: {
+            labels: ['Total Revenue'],
+
+            datasets: [{
+                label: 'Revenue (৳)',
+                data: [@Model.TotalRevenue],
+
+                backgroundColor: '#4F46E5',
+                borderRadius: 10
+            }]
+        },
+
+        options: {
+
+            responsive: true,
+
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+</script> *@
+
+}

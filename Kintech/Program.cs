@@ -34,6 +34,7 @@ builder.Services.AddSession();
 
 var app = builder.Build();
 
+
 app.UseStaticFiles();
 app.UseRouting();
 
@@ -44,7 +45,7 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Product}/{action=Index}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 using (var scope = app.Services.CreateScope())
 {
