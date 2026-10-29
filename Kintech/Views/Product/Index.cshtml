@@ -1,86 +1,1163 @@
 ﻿@model Kintech.ViewModels.Product.ProductIndexViewModel
-@using Kintech.Models
 
-<div class="shop-layout">
+@{
+    ViewData["Title"] = "All Tech & Gadgets";
 
-    <!-- LEFT SIDE: CATEGORY -->
-    <div class="sidebar">
-        @foreach (var parent in Model.Categories)
-        {
-            <div class="category-group">
-                <h4>@parent.Name</h4>
-                @if (parent.SubCategories is { Count: > 0 })
-                {
-                    @foreach (var sub in parent.SubCategories)
-                    {
-                        <a asp-controller="Product"
-                           asp-action="Index"
-                           asp-route-categoryId="@sub.Id"
-                           class="@(Model.SelectedCategoryId == sub.Id ? "active" : "")">
-                            @sub.Name
-                        </a>
-                    }
-                }
+    // ---------- DATA ----------
+    var dbProducts = Model?.Products?.ToList() ?? new List<Kintech.Models.Product>();
+    var categories = (Model?.Categories != null && Model.Categories.Any())
+        ? Model.Categories.ToList()
+        : (ViewBag.Categories as List<Kintech.Models.Category> ?? new List<Kintech.Models.Category>());
+
+    // Fallback demo products if the database has 0 products
+    var fallbackCatalog = new List<Kintech.Models.Product>
+    {
+        new Kintech.Models.Product { Id = 1, CategoryId = 3, Name = "Aura Pro Wireless RGB Gaming Laptop", Price = 118500, Stock = 7, ImageUrl = "/images/HomePage/HomeProductImg.png", Description = "165Hz QHD display, RTX graphics, per-key RGB keyboard & ultra-fast cooling." },
+        new Kintech.Models.Product { Id = 2, CategoryId = 1, Name = "SonicPulse ANC Studio Wireless Headset", Price = 8490, Stock = 4, ImageUrl = "/images/HomePage/HomeProductImg-1.png", Description = "45dB Active Noise Cancellation, 60-hour battery life & Hi-Res spatial audio." },
+        new Kintech.Models.Product { Id = 3, CategoryId = 2, Name = "Amazfit GT Pro AMOLED Smartwatch", Price = 6850, Stock = 12, ImageUrl = "/images/amzefitwatch1.jpg", Description = "1.43\" Always-On AMOLED display, 24/7 heart-rate & SpO2 sensor, 5ATM waterproof." },
+        new Kintech.Models.Product { Id = 4, CategoryId = 4, Name = "KeyChron Mechanical Hot-Swap Keyboard", Price = 5990, Stock = 3, ImageUrl = "/images/HomePage/HomeProductImg-2.png", Description = "Gasket-mounted tactile switches, tri-mode wireless & aircraft-grade aluminum frame." },
+        new Kintech.Models.Product { Id = 5, CategoryId = 5, Name = "VoltMax 65W GaN Fast Power Bank", Price = 3450, Stock = 15, ImageUrl = "/images/HomePage/HomeProductImg-3.png", Description = "20,000mAh high-density cell, dual USB-C PD 65W laptop charging & LED digital display." },
+        new Kintech.Models.Product { Id = 6, CategoryId = 3, Name = "HyperGlide Pro Wireless Esports Mouse", Price = 4290, Stock = 9, ImageUrl = "/images/50b9c164-c91b-49a2-b69c-1ab93f3c9070.jpg", Description = "54g ultra-lightweight shell, 26,000 DPI optical sensor & 80-hour battery." },
+        new Kintech.Models.Product { Id = 7, CategoryId = 1, Name = "NovaBuds Pro True Wireless Earbuds", Price = 3190, Stock = 5, ImageUrl = "/images/78f917a3-c529-44ff-be0d-6cf6755aacc7.jpg", Description = "Quad-mic ENC crystal clear calls, 45ms low-latency gaming mode & IPX5 rating." },
+        new Kintech.Models.Product { Id = 8, CategoryId = 4, Name = "TitanHub 8-in-1 Type-C Workstation Dock", Price = 2890, Stock = 11, ImageUrl = "/images/ada9090f-10be-4505-b44b-2db0ce427096.jpg", Description = "4K@60Hz HDMI, 100W PD pass-through, Gigabit Ethernet & SD/TF 3.0 card readers." }
+    };
+
+    var products = dbProducts.Any() ? dbProducts : fallbackCatalog;
+
+    // ---------- SELECTED CATEGORY (same source of truth as the old sidebar) ----------
+    int? selId = Model?.SelectedCategoryId;
+    if (selId == null || selId == 0)
+    {
+        selId = int.TryParse(Context.Request.Query["categoryId"].ToString(), out int parsedCatId) ? parsedCatId : (int?)null;
+    }
+
+    // ---------- PRODUCT COUNTS PER CATEGORY ----------
+    // Only shown when the page really holds products from more than one category,
+    // otherwise the numbers would be misleading (e.g. server already filtered the list).
+    var countByCat = products
+        .GroupBy(p => (int?)p.CategoryId)
+        .Where(g => g.Key.HasValue)
+        .ToDictionary(g => g.Key!.Value, g => g.Count());
+    bool showCounts = countByCat.Count > 1;
+
+    string ResolveImg(string? rawUrl, string fallback = "/images/HomePage/HomeProductImg.png")
+    {
+        if (string.IsNullOrWhiteSpace(rawUrl)) return fallback;
+        if (rawUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase) || rawUrl.StartsWith("/")) return rawUrl;
+        if (rawUrl.StartsWith("~/")) return rawUrl.Substring(1);
+        if (rawUrl.StartsWith("images/", StringComparison.OrdinalIgnoreCase)) return "/" + rawUrl;
+        return "/images/" + rawUrl;
+    }
+
+    string IconFor(string? name)
+    {
+        var n = (name ?? "").ToLowerInvariant();
+        if (n.Contains("audio") || n.Contains("earbud") || n.Contains("head") || n.Contains("speaker")) return "🎧";
+        if (n.Contains("comput") || n.Contains("laptop") || n.Contains("keyboard")) return "💻";
+        if (n.Contains("gam")) return "🎮";
+        if (n.Contains("wear") || n.Contains("watch")) return "⌚";
+        if (n.Contains("phone") || n.Contains("case") || n.Contains("mobile")) return "📱";
+        if (n.Contains("power") || n.Contains("charg") || n.Contains("battery")) return "🔋";
+        if (n.Contains("deal") || n.Contains("sale") || n.Contains("offer")) return "🔥";
+        if (n.Contains("camera") || n.Contains("photo")) return "📷";
+        return "🛍️";
+    }
+}
+
+<style>
+    /* ============================================================
+       PAGE SHELL - breaks out of the narrow Bootstrap container
+    ============================================================ */
+    body:has(.kt-shop) {
+        overflow-x: clip;
+        background:
+            radial-gradient(900px 520px at 4% -4%, rgba(79, 70, 229, 0.10), transparent 62%),
+            radial-gradient(800px 520px at 98% 2%, rgba(236, 72, 153, 0.08), transparent 62%),
+            radial-gradient(760px 520px at 55% 100%, rgba(6, 182, 212, 0.08), transparent 62%),
+            #F6F8FF;
+        background-attachment: fixed;
+    }
+
+    body.kt-lock { overflow: hidden; }
+
+    .kt-shop {
+        position: relative;
+        width: 100vw;
+        margin-left: calc(50% - 50vw);
+        padding: 8px max(20px, calc((100vw - 1640px) / 2)) 48px;
+        display: grid;
+        grid-template-columns: 288px minmax(0, 1fr);
+        gap: 30px;
+        align-items: start;
+    }
+
+    .kt-shop [hidden] { display: none !important; }
+
+    .kt-shop-main { min-width: 0; }
+
+    /* ============================================================
+       PREMIUM SIDEBAR
+    ============================================================ */
+    .kt-sidebar {
+        position: sticky;
+        top: 20px;
+        max-height: calc(100vh - 40px);
+        display: flex;
+        flex-direction: column;
+        background: rgba(255, 255, 255, 0.82);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(79, 70, 229, 0.12);
+        border-radius: 28px;
+        box-shadow: 0 24px 50px -22px rgba(79, 70, 229, 0.30), 0 2px 6px rgba(15, 23, 42, 0.04);
+        margin-top: 1.5rem;
+        overflow: hidden;
+    }
+
+    .kt-sb-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 22px 22px 12px;
+    }
+
+    .kt-sb-eyebrow {
+        display: block;
+        font-size: 10.5px;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #6366F1;
+    }
+
+    .kt-sb-title {
+        margin: 2px 0 0;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 21px;
+        font-weight: 800;
+        letter-spacing: -0.4px;
+        color: #0F172A;
+    }
+
+    .kt-sb-close {
+        display: none;
+        width: 36px;
+        height: 36px;
+        border: none;
+        border-radius: 12px;
+        background: #F1F5F9;
+        color: #334155;
+        font-size: 15px;
+        cursor: pointer;
+    }
+
+    .kt-sb-search {
+        position: relative;
+        margin: 4px 18px 10px;
+    }
+
+    .kt-sb-search span {
+        position: absolute;
+        left: 13px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 13px;
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    .kt-sb-search input {
+        width: 100%;
+        padding: 10px 14px 10px 36px;
+        border-radius: 14px;
+        border: 1px solid #E2E8F0;
+        background: #F8FAFC;
+        font-size: 13.5px;
+        color: #0F172A;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .kt-sb-search input:focus {
+        outline: none;
+        background: #FFFFFF;
+        border-color: #818CF8;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.14);
+    }
+
+    .kt-sb-nav {
+        flex: 1;
+        overflow-y: auto;
+        padding: 4px 12px 12px;
+        scrollbar-width: thin;
+        scrollbar-color: #CBD5E1 transparent;
+    }
+
+    .kt-sb-nav::-webkit-scrollbar { width: 6px; }
+    .kt-sb-nav::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 6px; }
+
+    /* "All products" + parent headers share the same row look */
+    .kt-cat-all,
+    .kt-grp-head,
+    .kt-cat-link.kt-solo {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 12px;
+        border: none;
+        border-radius: 16px;
+        background: transparent;
+        color: #1E293B;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        text-align: left;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease;
+    }
+
+    .kt-cat-all:hover,
+    .kt-grp-head:hover,
+    .kt-cat-link.kt-solo:hover { background: #F1F5F9; color: #4F46E5; }
+
+    .kt-ic {
+        flex: 0 0 34px;
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 11px;
+        background: linear-gradient(135deg, #EEF2FF, #F5F3FF);
+        border: 1px solid rgba(99, 102, 241, 0.14);
+        font-size: 16px;
+        transition: transform 0.3s ease, background 0.3s ease;
+    }
+
+    .kt-cat-all:hover .kt-ic,
+    .kt-grp-head:hover .kt-ic { transform: scale(1.08) rotate(-4deg); }
+
+    .kt-lbl { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .kt-cnt {
+        flex: 0 0 auto;
+        min-width: 26px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #F1F5F9;
+        color: #64748B;
+        font-size: 11.5px;
+        font-weight: 700;
+        text-align: center;
+        transition: all 0.25s ease;
+    }
+
+    .kt-chev {
+        flex: 0 0 16px;
+        width: 16px;
+        height: 16px;
+        color: #94A3B8;
+        transition: transform 0.3s ease;
+    }
+
+    .kt-grp.open > .kt-grp-head .kt-chev { transform: rotate(180deg); }
+
+    .kt-grp { margin-top: 4px; }
+
+    /* smooth accordion */
+    .kt-grp-body {
+        display: grid;
+        grid-template-rows: 0fr;
+        transition: grid-template-rows 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .kt-grp.open > .kt-grp-body { grid-template-rows: 1fr; }
+
+    .kt-grp-inner {
+        min-height: 0;
+        overflow: hidden;
+        list-style: none;
+        margin: 0;
+        padding: 0 0 0 28px;
+        position: relative;
+    }
+
+    /* vertical guide line for sub-items */
+    .kt-grp-inner::before {
+        content: "";
+        position: absolute;
+        left: 29px;
+        top: 4px;
+        bottom: 10px;
+        width: 2px;
+        border-radius: 2px;
+        background: linear-gradient(180deg, #E0E7FF, transparent);
+    }
+
+    .kt-cat-li { margin: 2px 0; }
+
+    .kt-cat-link {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 12px 9px 22px;
+        border-radius: 12px;
+        color: #475569;
+        font-size: 13.5px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease;
+    }
+
+    .kt-cat-link::before {
+        content: "";
+        position: absolute;
+        left: 8px;
+        top: 50%;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #CBD5E1;
+        transform: translateY(-50%);
+        transition: all 0.25s ease;
+    }
+
+    .kt-cat-link.kt-solo::before { display: none; }
+    .kt-cat-link.kt-solo { padding-left: 12px; }
+
+    .kt-cat-link:hover {
+        background: linear-gradient(90deg, rgba(99, 102, 241, 0.10), rgba(99, 102, 241, 0.02));
+        color: #4F46E5;
+        transform: translateX(4px);
+    }
+
+    .kt-cat-link:hover::before { background: #818CF8; }
+
+    /* ACTIVE state */
+    .kt-cat-link.active,
+    .kt-cat-all.active {
+        background: linear-gradient(120deg, #4F46E5 0%, #6366F1 55%, #8B5CF6 100%);
+        color: #FFFFFF;
+        font-weight: 700;
+        box-shadow: 0 12px 22px -10px rgba(79, 70, 229, 0.65);
+        transform: none;
+    }
+
+    .kt-cat-link.active::before {
+        background: #FFFFFF;
+        box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.28);
+    }
+
+    .kt-cat-all.active .kt-ic { background: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.3); }
+    .kt-cat-all.active .kt-cnt,
+    .kt-cat-link.active .kt-cnt { background: rgba(255, 255, 255, 0.22); color: #FFFFFF; }
+
+    .kt-grp.has-active > .kt-grp-head { color: #4F46E5; }
+    .kt-grp.has-active > .kt-grp-head .kt-ic { background: linear-gradient(135deg, #E0E7FF, #EDE9FE); }
+
+    .kt-sb-empty {
+        margin: 14px 8px;
+        padding: 14px;
+        text-align: center;
+        font-size: 13px;
+        color: #64748B;
+        background: #F8FAFC;
+        border: 1px dashed #CBD5E1;
+        border-radius: 14px;
+    }
+
+    .kt-sb-foot {
+        margin: 0 14px 14px;
+        padding: 14px 16px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, #1E1B4B 0%, #4338CA 100%);
+        color: #E0E7FF;
+        font-size: 12.5px;
+        line-height: 1.5;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .kt-sb-foot::after {
+        content: "";
+        position: absolute;
+        right: -30px;
+        top: -30px;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(236, 72, 153, 0.5), transparent 70%);
+    }
+
+    .kt-sb-foot strong { display: block; color: #FFFFFF; font-size: 13.5px; margin-bottom: 2px; }
+
+    /* mobile drawer controls */
+    .kt-open-filters {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        padding: 0.55rem 1rem;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #4F46E5, #7C3AED);
+        color: #FFFFFF;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 8px 18px -6px rgba(79, 70, 229, 0.5);
+    }
+
+    .kt-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1040;
+        background: rgba(15, 23, 42, 0.55);
+        backdrop-filter: blur(3px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .kt-overlay.show { opacity: 1; pointer-events: auto; }
+
+    /* ============================================================
+       CATALOG (hero, toolbar, cards)
+    ============================================================ */
+    @@keyframes ktCardPopIn {
+        0% { opacity: 0; transform: translateY(20px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .kt-catalog-hero {
+        position: relative;
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #31104b 100%);
+        border-radius: 24px;
+        padding: 2.25rem 2rem;
+        margin: 1.5rem 0 1.5rem;
+        color: #ffffff;
+        overflow: hidden;
+        box-shadow: 0 20px 45px -15px rgba(30, 27, 75, 0.4);
+    }
+
+    .kt-catalog-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.9rem;
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 0.9rem 1.1rem;
+        margin-bottom: 0.9rem;
+        box-shadow: 0 8px 20px -8px rgba(15, 23, 42, 0.06);
+    }
+
+    .kt-search-box { position: relative; flex: 1 1 260px; }
+
+    .kt-search-input {
+        width: 100%;
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+        color: #0f172a;
+        border-radius: 12px;
+        padding: 0.6rem 1rem 0.6rem 2.4rem;
+        font-size: 0.9rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .kt-search-input:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        background: #ffffff;
+    }
+
+    .kt-search-icon {
+        position: absolute;
+        left: 0.85rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #64748b;
+        font-size: 0.9rem;
+        pointer-events: none;
+    }
+
+    .kt-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #334155;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .kt-switch input { position: absolute; opacity: 0; pointer-events: none; }
+
+    .kt-switch-track {
+        width: 40px;
+        height: 22px;
+        border-radius: 999px;
+        background: #CBD5E1;
+        position: relative;
+        transition: background 0.25s ease;
+    }
+
+    .kt-switch-track::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .kt-switch input:checked + .kt-switch-track { background: linear-gradient(135deg, #4F46E5, #7C3AED); }
+    .kt-switch input:checked + .kt-switch-track::after { transform: translateX(18px); }
+    .kt-switch input:focus-visible + .kt-switch-track { outline: 3px solid rgba(99, 102, 241, 0.4); outline-offset: 2px; }
+
+    .kt-sort-select {
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+        color: #0f172a;
+        border-radius: 12px;
+        padding: 0.55rem 0.9rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .kt-result-line {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        margin: 0 0.25rem 1.1rem;
+        font-size: 0.85rem;
+        color: #64748b;
+    }
+
+    .kt-result-line strong { color: #0f172a; }
+
+    .kt-chip-clear {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 10px;
+        border: 1px solid #C7D2FE;
+        border-radius: 999px;
+        background: #EEF2FF;
+        color: #4338CA;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .kt-chip-clear:hover { background: #E0E7FF; }
+
+    .kt-catalog-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .kt-product-item { animation: ktCardPopIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+    .kt-RichCard {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        box-shadow: 0 10px 25px -8px rgba(15, 23, 42, 0.08);
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+
+    .kt-RichCard:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 22px 40px -12px rgba(99, 102, 241, 0.22);
+        border-color: #818cf8;
+    }
+
+    .kt-RichCard-imgbox {
+        position: relative;
+        height: 215px;
+        background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.25rem;
+        overflow: hidden;
+    }
+
+    .kt-RichCard-img {
+        max-height: 175px;
+        max-width: 92%;
+        object-fit: contain;
+        transition: transform 0.4s ease;
+    }
+
+    .kt-RichCard:hover .kt-RichCard-img { transform: scale(1.08) translateY(-4px); }
+
+    .kt-badge-top-left {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: linear-gradient(135deg, #6366f1, #ec4899);
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.28rem 0.7rem;
+        border-radius: 999px;
+        z-index: 2;
+    }
+
+    .kt-badge-top-right {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: #dcfce7;
+        color: #15803d;
+        border: 1px solid #86efac;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.25rem 0.65rem;
+        border-radius: 999px;
+        z-index: 2;
+    }
+
+    .kt-badge-top-right.low { background: #fef3c7; color: #b45309; border-color: #fde68a; }
+    .kt-badge-top-right.out { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+
+    .kt-RichCard-body { padding: 1.2rem 1.25rem 1.3rem; display: flex; flex-direction: column; flex-grow: 1; }
+
+    .kt-RichCard-meta { display: flex; justify-content: space-between; align-items: center; font-size: 0.76rem; margin-bottom: 0.35rem; }
+    .kt-RichCard-cat { color: #6366f1; font-weight: 700; text-transform: uppercase; }
+    .kt-RichCard-stars { color: #f59e0b; font-weight: 700; }
+
+    .kt-RichCard-title {
+        font-size: 1.02rem;
+        font-weight: 700;
+        color: #0f172a;
+        text-decoration: none;
+        line-height: 1.35;
+        margin-bottom: 0.4rem;
+        display: block;
+    }
+
+    .kt-RichCard-title:hover { color: #4f46e5; }
+
+    .kt-RichCard-desc {
+        font-size: 0.82rem;
+        color: #64748b;
+        line-height: 1.45;
+        margin-bottom: 0.75rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .kt-RichCard-specs { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.8rem; }
+    .kt-spec-pill { font-size: 0.7rem; font-weight: 600; padding: 0.22rem 0.55rem; border-radius: 6px; background: #eef2ff; color: #4338ca; }
+    .kt-spec-pill.green { background: #ecfdf5; color: #047857; }
+
+    .kt-stock-progress { margin-bottom: 0.9rem; }
+    .kt-stock-labels { display: flex; justify-content: space-between; font-size: 0.72rem; color: #64748b; margin-bottom: 0.25rem; font-weight: 500; }
+    .kt-stock-bar { height: 6px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
+    .kt-stock-bar-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #10b981); border-radius: 999px; }
+
+    .kt-RichCard-footer {
+        margin-top: auto;
+        padding-top: 0.8rem;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+
+    .kt-price-main { font-size: 1.18rem; font-weight: 800; color: #0f172a; }
+    .kt-price-old { font-size: 0.78rem; color: #94a3b8; text-decoration: line-through; margin-left: 4px; }
+
+    .kt-card-actions { display: flex; gap: 0.4rem; }
+
+    .kt-btn-spec {
+        padding: 0.45rem 0.8rem;
+        border-radius: 10px;
+        border: 1px solid #cbd5e1;
+        color: #334155;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .kt-btn-spec:hover { border-color: #6366f1; color: #4f46e5; background: #eef2ff; }
+
+    .kt-btn-cart {
+        padding: 0.45rem 0.9rem;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: #ffffff !important;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .kt-btn-cart:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(99, 102, 241, 0.4); }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @@media (max-width: 991px) {
+        .kt-shop { grid-template-columns: minmax(0, 1fr); padding: 8px 16px 40px; gap: 0; }
+
+        .kt-open-filters { display: inline-flex; }
+        .kt-sb-close { display: inline-flex; align-items: center; justify-content: center; }
+
+        .kt-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 1050;
+            width: min(88vw, 340px);
+            max-height: none;
+            margin-top: 0;
+            border-radius: 0 28px 28px 0;
+            background: rgba(255, 255, 255, 0.97);
+            transform: translateX(-105%);
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .kt-sidebar.open { transform: translateX(0); }
+    }
+
+    @@media (max-width: 480px) {
+        .kt-catalog-grid { grid-template-columns: 1fr; }
+        .kt-catalog-hero { padding: 1.5rem 1.25rem; }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .kt-product-item { animation: none; }
+        .kt-sidebar, .kt-grp-body, .kt-cat-link, .kt-RichCard { transition: none; }
+    }
+</style>
+
+<div class="kt-shop">
+
+    <div class="kt-overlay" id="ktOverlay"></div>
+
+    <!-- ============================================================
+         SIDEBAR
+    ============================================================ -->
+    <aside class="kt-sidebar" id="ktSidebar" aria-label="Product categories">
+
+        <div class="kt-sb-head">
+            <div>
+                <span class="kt-sb-eyebrow">Browse</span>
+                <h2 class="kt-sb-title">Categories</h2>
             </div>
-        }
-    </div>
+            <button type="button" class="kt-sb-close" id="ktCloseSidebar" aria-label="Close categories">✕</button>
+        </div>
 
-    <!-- RIGHT SIDE: PRODUCTS -->
-    <div class="products">
-        @if (!Model.Products.Any())
-        {
-            <p class="no-products">No products found.</p>
-        }
-        else
-        {
-            <div class="grid">
-                @foreach (var item in Model.Products)
+        <div class="kt-sb-search">
+            <span>🔍</span>
+            <input type="search" id="ktCatSearch" placeholder="Find a category..." autocomplete="off" aria-label="Find a category" />
+        </div>
+
+        <nav class="kt-sb-nav" id="ktSbNav">
+
+            <a asp-controller="Product" asp-action="Index"
+               class="kt-cat-all @(selId == null ? "active" : "")"
+               data-cat="all" data-label="All Products">
+                <span class="kt-ic">✨</span>
+                <span class="kt-lbl">All Products</span>
+                @if (showCounts)
                 {
-                    <div class="card">
-                        <div class="home-card-img">
-                            <img src="@(item.ImageUrl ?? "/images/default.png")"
-                                 alt="@item.Name" />
-                        </div>
-                        <div class="home-card-body">
-                            <h3 class="home-card-name">@item.Name</h3>
-                            <p class="home-card-price">৳@item.Price.ToString("N2")</p>
+                    <span class="kt-cnt">@products.Count</span>
+                }
+            </a>
 
-                            @* ✅ Stock badge *@
-                            @if (item.Stock <= 0)
-                            {
-                                <span class="stock sold-out">Sold Out</span>
-                            }
-                            else if (item.Stock < 10)
-                            {
-                                <span class="stock low-stock">Only @item.Stock left</span>
-                            }
-                            else
-                            {
-                                <span class="stock in-stock">In Stock (@item.Stock)</span>
-                            }
+            @foreach (var parent in categories)
+            {
+                var subs = parent.SubCategories?.ToList() ?? new List<Kintech.Models.Category>();
+                var parentName = parent.Name ?? "";
+                var groupCount = countByCat.GetValueOrDefault(parent.Id) + subs.Sum(s => countByCat.GetValueOrDefault(s.Id));
+                var hasActive = selId != null && (selId == parent.Id || subs.Any(s => s.Id == selId));
 
-                            @* ✅ Single clean Add to Cart block *@
-                            @if (item.Stock <= 0)
+                if (subs.Count == 0)
+                {
+                    @* Category without sub-categories: a single clickable row *@
+                    <div class="kt-grp kt-grp-solo" data-label="@parentName.ToLowerInvariant()">
+                        <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@parent.Id"
+                           class="kt-cat-link kt-solo @(selId == parent.Id ? "active" : "")"
+                           data-cat="@parent.Id" data-label="@parentName">
+                            <span class="kt-ic">@IconFor(parentName)</span>
+                            <span class="kt-lbl">@parentName</span>
+                            @if (showCounts)
                             {
-                                <button class="btn-soldout" disabled>Sold Out</button>
+                                <span class="kt-cnt">@groupCount</span>
                             }
-                            else
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="kt-grp open @(hasActive ? "has-active" : "")" data-label="@parentName.ToLowerInvariant()">
+                        <button type="button" class="kt-grp-head" aria-expanded="true">
+                            <span class="kt-ic">@IconFor(parentName)</span>
+                            <span class="kt-lbl">@parentName</span>
+                            @if (showCounts)
                             {
-                                <form method="post"
-                                      asp-controller="Cart"
-                                      asp-action="Add">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="id" value="@item.Id" />
-                                    <button type="submit" class="btn-add-cart">
-                                        Add to Cart
-                                    </button>
-                                </form>
+                                <span class="kt-cnt">@groupCount</span>
                             }
+                            <svg class="kt-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="kt-grp-body">
+                            <ul class="kt-grp-inner">
+                                @foreach (var sub in subs)
+                                {
+                                    var subName = sub.Name ?? "";
+                                    <li class="kt-cat-li" data-label="@subName.ToLowerInvariant()">
+                                        <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@sub.Id"
+                                           class="kt-cat-link @(selId == sub.Id ? "active" : "")"
+                                           data-cat="@sub.Id" data-label="@subName">
+                                            <span class="kt-lbl">@subName</span>
+                                            @if (showCounts)
+                                            {
+                                                <span class="kt-cnt">@countByCat.GetValueOrDefault(sub.Id)</span>
+                                            }
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
                         </div>
                     </div>
                 }
-            </div>
-        }
-    </div>
+            }
 
+            <p class="kt-sb-empty" id="ktSbEmpty" hidden>No categories match your search.</p>
+        </nav>
+
+        <div class="kt-sb-foot">
+            <strong>🚚 Free delivery over ৳2,000</strong>
+            Official warranty on every product &middot; 7-day easy replacement.
+        </div>
+    </aside>
+
+    <!-- ============================================================
+         MAIN CONTENT
+    ============================================================ -->
+    <section class="kt-shop-main">
+
+        <!-- CATALOG HERO -->
+        <div class="kt-catalog-hero">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                    <span style="font-size:0.78rem; text-transform:uppercase; letter-spacing:1px; color:#a5b4fc; font-weight:700;">
+                        Official Kintech Store · Bangladesh
+                    </span>
+                    <h1 class="mb-1" style="font-size: 2rem; font-weight: 800; color: #fff;">Explore Flagship Tech &amp; Gear</h1>
+                    <p class="mb-0" style="color: #cbd5e1; max-width: 600px; font-size: 0.95rem;">
+                        Every gadget includes official brand warranty, 4-slot customizable Dhaka delivery, and 7-day easy replacement.
+                    </p>
+                </div>
+                <div class="text-end">
+                    <div style="font-size: 1.75rem; font-weight: 800; color: #38bdf8;" id="visibleProductCount">@products.Count</div>
+                    <div style="font-size: 0.8rem; color: #cbd5e1;">Products Available</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOOLBAR -->
+        <div class="kt-catalog-toolbar">
+            <button type="button" class="kt-open-filters" id="ktOpenSidebar">☰ Categories</button>
+
+            <div class="kt-search-box">
+                <span class="kt-search-icon">🔍</span>
+                <input type="text" id="catalogSearchInput" class="kt-search-input"
+                       placeholder="Search laptops, earbuds, watches, keyboards..." />
+            </div>
+
+            <label class="kt-switch">
+                <input type="checkbox" id="inStockOnly" />
+                <span class="kt-switch-track"></span>
+                In stock only
+            </label>
+
+            <select id="catalogSortSelect" class="kt-sort-select">
+                <option value="featured">Sort: Featured First</option>
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+                <option value="name-asc">Name: A to Z</option>
+            </select>
+        </div>
+
+        <div class="kt-result-line">
+            <span>Showing <strong id="ktResultCount">@products.Count</strong> products in <strong id="ktResultCat">All Products</strong></span>
+            <button type="button" class="kt-chip-clear" id="ktClearAll" hidden>Clear filters ✕</button>
+        </div>
+
+        <!-- PRODUCT GRID -->
+        <div class="kt-catalog-grid" id="catalogProductGrid">
+            @{
+                var cardIdx = 0;
+            }
+            @foreach (var item in products)
+            {
+                var imgSrc = ResolveImg(item.ImageUrl, "/images/HomePage/HomeProductImg.png");
+                var oldPrice = item.Price * 1.15m;
+                var stockPct = Math.Clamp(item.Stock * 6, 18, 100);
+                var isLow = item.Stock > 0 && item.Stock <= 5;
+                var isOut = item.Stock <= 0;
+                var reviews = 34 + ((item.Id * 19) % 110);
+                var catName = item.Category != null ? item.Category.Name : "Flagship Tech";
+
+                <div class="kt-product-item"
+                     style="animation-delay: @((cardIdx % 8) * 55)ms"
+                     data-id="@item.Id"
+                     data-name="@(item.Name?.ToLowerInvariant())"
+                     data-desc="@(item.Description?.ToLowerInvariant())"
+                     data-catname="@(catName?.ToLowerInvariant())"
+                     data-category-id="@item.CategoryId"
+                     data-stock="@item.Stock"
+                     data-price="@item.Price">
+
+                    <div class="kt-RichCard">
+                        <div class="kt-RichCard-imgbox">
+                            <span class="kt-badge-top-left">⚡ Official</span>
+                            <span class="kt-badge-top-right @(isOut ? "out" : isLow ? "low" : "")">
+                                @(isOut ? "Sold Out" : isLow ? $"Only {item.Stock} left" : "In Stock")
+                            </span>
+                            <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id">
+                                <img src="@imgSrc"
+                                     alt="@item.Name"
+                                     class="kt-RichCard-img"
+                                     onerror="this.onerror=null;this.src='/images/HomePage/HomeProductImg.png';" />
+                            </a>
+                        </div>
+
+                        <div class="kt-RichCard-body">
+                            <div class="kt-RichCard-meta">
+                                <span class="kt-RichCard-cat">@catName</span>
+                                <span class="kt-RichCard-stars">★★★★★ (4.9 · @reviews)</span>
+                            </div>
+
+                            <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" class="kt-RichCard-title">
+                                @item.Name
+                            </a>
+
+                            <p class="kt-RichCard-desc">
+                                @(!string.IsNullOrWhiteSpace(item.Description)
+                                    ? item.Description
+                                    : "Engineered for high performance with official brand warranty, genuine components, and express Bangladesh delivery.")
+                            </p>
+
+                            <div class="kt-RichCard-specs">
+                                <span class="kt-spec-pill">🛡 1 Yr Warranty</span>
+                                <span class="kt-spec-pill green">🚚 4-Slot Delivery</span>
+                                <span class="kt-spec-pill">✔ 100% Genuine</span>
+                            </div>
+
+                            <div class="kt-stock-progress">
+                                <div class="kt-stock-labels">
+                                    <span>Stock Status</span>
+                                    <span>@(item.Stock > 0 ? $"{item.Stock} units available" : "Restocking soon")</span>
+                                </div>
+                                <div class="kt-stock-bar">
+                                    <div class="kt-stock-bar-fill" style="width: @(stockPct)%;"></div>
+                                </div>
+                            </div>
+
+                            <div class="kt-RichCard-footer">
+                                <div>
+                                    <span style="font-size:0.7rem; color:#64748b; display:block;">Kintech Price</span>
+                                    <span class="kt-price-main">৳@item.Price.ToString("N0")</span>
+                                    <span class="kt-price-old">৳@oldPrice.ToString("N0")</span>
+                                </div>
+                                <div class="kt-card-actions">
+                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" class="kt-btn-spec">Specs</a>
+                                    @if (!isOut)
+                                    {
+                                        <a asp-controller="Cart" asp-action="Add" asp-route-id="@item.Id" class="kt-btn-cart">+ Cart</a>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                cardIdx++;
+            }
+        </div>
+
+        <div id="noFilterMatchMsg" class="text-center py-5" style="display: none;">
+            <h4 class="mb-2">No gadgets matched your filter</h4>
+            <p class="text-muted mb-3">Try clearing your search keyword or switching to "All Products".</p>
+            <button type="button" class="kt-btn-cart" style="border:none; padding: 0.6rem 1.4rem;" id="ktResetBtn">Reset Filters</button>
+        </div>
+    </section>
 </div>
+
+<script>
+(function () {
+    const grid       = document.getElementById('catalogProductGrid');
+    const sidebar    = document.getElementById('ktSidebar');
+    const overlay    = document.getElementById('ktOverlay');
+    const searchBox  = document.getElementById('catalogSearchInput');
+    const stockSw    = document.getElementById('inStockOnly');
+    const sortSel    = document.getElementById('catalogSortSelect');
+    const catSearch  = document.getElementById('ktCatSearch');
+    const clearBtn   = document.getElementById('ktClearAll');
+    const emptyMsg   = document.getElementById('noFilterMatchMsg');
+
+    const state = { cat: '@(selId?.ToString() ?? "all")' };
+
+    const items = () => Array.from(grid.querySelectorAll('.kt-product-item'));
+
+    // Client-side filtering is only safe when the page already holds products from several categories.
+    // If the server sent a single (already filtered) category, sidebar links navigate normally.
+    const canClientFilter = () => new Set(items().map(i => i.dataset.categoryId)).size > 1;
+
+    /* ---------------- filtering ---------------- */
+    function filterCatalog() {
+        const q = (searchBox.value || '').trim().toLowerCase();
+        const onlyStock = stockSw.checked;
+        let visible = 0;
+
+        items().forEach(el => {
+            const okCat    = state.cat === 'all' || el.dataset.categoryId === state.cat;
+            const okSearch = !q || (el.dataset.name || '').includes(q) || (el.dataset.desc || '').includes(q) || (el.dataset.catname || '').includes(q);
+            const okStock  = !onlyStock || parseInt(el.dataset.stock || '0', 10) > 0;
+            const show = okCat && okSearch && okStock;
+            el.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+
+        document.getElementById('visibleProductCount').textContent = visible;
+        document.getElementById('ktResultCount').textContent = visible;
+
+        const active = sidebar.querySelector('.kt-cat-link.active, .kt-cat-all.active');
+        document.getElementById('ktResultCat').textContent = active ? (active.dataset.label || 'All Products') : 'All Products';
+
+        clearBtn.hidden = !(q || onlyStock || state.cat !== 'all');
+        emptyMsg.style.display = visible === 0 ? 'block' : 'none';
+    }
+
+    function sortCatalog() {
+        const v = sortSel.value;
+        const list = items();
+        list.sort((a, b) => {
+            const pa = parseFloat(a.dataset.price || '0'), pb = parseFloat(b.dataset.price || '0');
+            if (v === 'price-asc')  return pa - pb;
+            if (v === 'price-desc') return pb - pa;
+            if (v === 'name-asc')   return (a.dataset.name || '').localeCompare(b.dataset.name || '');
+            return parseInt(a.dataset.id || '0', 10) - parseInt(b.dataset.id || '0', 10);
+        });
+        list.forEach(el => grid.appendChild(el));
+    }
+
+    function setCategory(cat, push) {
+        state.cat = cat;
+        sidebar.querySelectorAll('[data-cat]').forEach(a => {
+            const on = a.dataset.cat === cat;
+            a.classList.toggle('active', on);
+            if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+        });
+        sidebar.querySelectorAll('.kt-grp').forEach(g => g.classList.toggle('has-active', !!g.querySelector('.kt-cat-link.active')));
+        filterCatalog();
+        if (push) {
+            const url = cat === 'all' ? location.pathname : location.pathname + '?categoryId=' + encodeURIComponent(cat);
+            history.pushState({ cat: cat }, '', url);
+        }
+    }
+
+    function resetAll() {
+        searchBox.value = '';
+        stockSw.checked = false;
+        sortSel.value = 'featured';
+        sortCatalog();
+        if (canClientFilter()) setCategory('all', true);
+        else location.href = location.pathname;
+    }
+
+    /* ---------------- sidebar: category links ---------------- */
+    sidebar.querySelectorAll('a[data-cat]').forEach(a => {
+        a.addEventListener('click', e => {
+            if (!canClientFilter()) return;   // let the server filter
+            e.preventDefault();
+            setCategory(a.dataset.cat, true);
+            closeDrawer();
+        });
+    });
+
+    window.addEventListener('popstate', () => {
+        const p = new URLSearchParams(location.search).get('categoryId');
+        if (canClientFilter()) setCategory(p || 'all', false); else location.reload();
+    });
+
+    sidebar.querySelectorAll('.kt-grp-head').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const g = btn.closest('.kt-grp');
+            const open = g.classList.toggle('open');
+            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+    });
+
+
+    catSearch.addEventListener('input', () => {
+        const q = catSearch.value.trim().toLowerCase();
+        let anyGroup = false;
+
+        sidebar.querySelectorAll('.kt-grp').forEach(g => {
+            const groupHit = (g.dataset.label || '').includes(q);
+            let matches = 0;
+            g.querySelectorAll('.kt-cat-li').forEach(li => {
+                const ok = !q || groupHit || (li.dataset.label || '').includes(q);
+                li.hidden = !ok;
+                if (ok) matches++;
+            });
+            const isSolo = g.classList.contains('kt-grp-solo');
+            const show = !q || groupHit || matches > 0;
+            g.hidden = !show;
+            if (show) anyGroup = true;
+            if (q && !isSolo && show) {
+                g.classList.add('open');
+                g.querySelector('.kt-grp-head')?.setAttribute('aria-expanded', 'true');
+            }
+        });
+
+        document.getElementById('ktSbEmpty').hidden = anyGroup || !q;
+    });
+
+
+    function openDrawer()  { sidebar.classList.add('open'); overlay.classList.add('show'); document.body.classList.add('kt-lock'); }
+    function closeDrawer() { sidebar.classList.remove('open'); overlay.classList.remove('show'); document.body.classList.remove('kt-lock'); }
+
+    document.getElementById('ktOpenSidebar')?.addEventListener('click', openDrawer);
+    document.getElementById('ktCloseSidebar')?.addEventListener('click', closeDrawer);
+    overlay.addEventListener('click', closeDrawer);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+  
+    searchBox.addEventListener('input', filterCatalog);
+    stockSw.addEventListener('change', filterCatalog);
+    sortSel.addEventListener('change', sortCatalog);
+    clearBtn.addEventListener('click', resetAll);
+    document.getElementById('ktResetBtn').addEventListener('click', resetAll);
+
+    filterCatalog();
+})();
+</script>

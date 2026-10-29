@@ -42,6 +42,29 @@ public class ProductController : Controller
 
         return View(vm);
     }
+    // ===================== DETAILS =====================
+    public async Task<IActionResult> Details(int id)
+    {
+        var product = await _productService.GetByIdAsync(id);
+        if (product is null) return NotFound();
+
+        var related = new List<Kintech.Models.Product>();
+
+        if (product.CategoryId.HasValue)
+        {
+            var sameCategory = await _productService.GetByCategoryAsync(product.CategoryId.Value);
+
+            foreach (Kintech.Models.Product p in sameCategory)
+            {
+                if (p.Id == id) continue;
+                related.Add(p);
+                if (related.Count == 4) break;
+            }
+        }
+
+        ViewBag.Related = related;
+        return View(product);
+    }
 
     // ===================== CREATE =====================
     [Authorize(Roles = "Admin")]

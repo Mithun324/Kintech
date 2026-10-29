@@ -11,5 +11,6 @@ public interface IProductService
     Task UpdateAsync(Product product);
     Task DeleteAsync(int id);
 
-    Task<List<Product>> GetByCategoryAsync(int categoryId); 
+    Task<List<Product>> GetByCategoryAsync(int categoryId);
+    Task<IEnumerable<object>> GetByCategoryAsync(int? categoryId);
 }
