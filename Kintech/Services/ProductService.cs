@@ -88,4 +88,9 @@ public class ProductService : IProductService
             .Where(p => p.CategoryId == categoryId)
             .ToListAsync();
     }
+
+    public Task<IEnumerable<object>> GetByCategoryAsync(int? categoryId)
+    {
+        throw new NotImplementedException();
+    }
 }

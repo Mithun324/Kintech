@@ -3,156 +3,731 @@
 @{
     ViewData["Title"] = "Home";
 
-    var categories = ViewBag.Categories as List<Kintech.Models.Category>;
-    var trendingProducts = ViewBag.TrendingProducts as List<Kintech.Models.Product>;
-    var newArrivals = ViewBag.NewArrivals as List<Kintech.Models.Product>;
+    var categories = (Model?.Categories != null && Model.Categories.Any())
+        ? Model.Categories
+        : (ViewBag.Categories as List<Kintech.Models.Category> ?? new List<Kintech.Models.Category>());
 
-    var audioCatId = categories?.FirstOrDefault(c => c.Name.Contains("Audio"))?.Id ?? 1;
-    var wearablesCatId = categories?.FirstOrDefault(c => c.Name.Contains("Wearable"))?.Id ?? 2;
-    var gamingCatId = categories?.FirstOrDefault(c => c.Name.Contains("Gaming"))?.Id ?? 3;
-    var computingCatId = categories?.FirstOrDefault(c => c.Name.Contains("Computing"))?.Id ?? 4;
-    var powerCatId = categories?.FirstOrDefault(c => c.Name.Contains("Power"))?.Id ?? 5;
+    var dbTrending = (Model?.FeaturedProducts != null && Model.FeaturedProducts.Any())
+        ? Model.FeaturedProducts
+        : (Model?.Products != null && Model.Products.Any())
+            ? Model.Products
+            : (ViewBag.TrendingProducts as List<Kintech.Models.Product> ?? new List<Kintech.Models.Product>());
+
+    var dbNewArrivals = (Model?.NewArrivals != null && Model.NewArrivals.Any())
+        ? Model.NewArrivals
+        : (ViewBag.NewArrivals as List<Kintech.Models.Product> ?? new List<Kintech.Models.Product>());
+
+    // Fallback demo products using your real wwwroot/images files if the database has 0 products
+    var fallbackCatalog = new List<Kintech.Models.Product>
+    {
+        new Kintech.Models.Product { Id = 1, Name = "Aura Pro Wireless RGB Gaming Laptop", Price = 118500, Stock = 7, ImageUrl = "/images/HomePage/HomeProductImg.png", Description = "165Hz QHD display, RTX graphics, per-key RGB keyboard & ultra-fast cooling." },
+        new Kintech.Models.Product { Id = 2, Name = "SonicPulse ANC Studio Wireless Headset", Price = 8490, Stock = 4, ImageUrl = "/images/HomePage/HomeProductImg-1.png", Description = "45dB Active Noise Cancellation, 60-hour battery life & Hi-Res spatial audio." },
+        new Kintech.Models.Product { Id = 3, Name = "Amazfit GT Pro AMOLED Smartwatch", Price = 6850, Stock = 12, ImageUrl = "/images/amzefitwatch1.jpg", Description = "1.43\" Always-On AMOLED display, 24/7 heart-rate & SpO2 sensor, 5ATM waterproof." },
+        new Kintech.Models.Product { Id = 4, Name = "KeyChron Mechanical Hot-Swap Keyboard", Price = 5990, Stock = 3, ImageUrl = "/images/HomePage/HomeProductImg-2.png", Description = "Gasket-mounted tactile switches, tri-mode wireless & aircraft-grade aluminum frame." },
+        new Kintech.Models.Product { Id = 5, Name = "VoltMax 65W GaN Fast Power Bank", Price = 3450, Stock = 15, ImageUrl = "/images/HomePage/HomeProductImg-3.png", Description = "20,000mAh high-density cell, dual USB-C PD 65W laptop charging & LED digital display." },
+        new Kintech.Models.Product { Id = 6, Name = "HyperGlide Pro Wireless Esports Mouse", Price = 4290, Stock = 9, ImageUrl = "/images/50b9c164-c91b-49a2-b69c-1ab93f3c9070.jpg", Description = "54g ultra-lightweight shell, 26,000 DPI optical sensor & 80-hour battery." },
+        new Kintech.Models.Product { Id = 7, Name = "NovaBuds Pro True Wireless Earbuds", Price = 3190, Stock = 5, ImageUrl = "/images/78f917a3-c529-44ff-be0d-6cf6755aacc7.jpg", Description = "Quad-mic ENC crystal clear calls, 45ms low-latency gaming mode & IPX5 rating." },
+        new Kintech.Models.Product { Id = 8, Name = "TitanHub 8-in-1 Type-C Workstation Dock", Price = 2890, Stock = 11, ImageUrl = "/images/ada9090f-10be-4505-b44b-2db0ce427096.jpg", Description = "4K@60Hz HDMI, 100W PD pass-through, Gigabit Ethernet & SD/TF 3.0 card readers." }
+    };
+
+    var trendingProducts = dbTrending.Any() ? dbTrending : fallbackCatalog.Take(4).ToList();
+    var newArrivals = dbNewArrivals.Any() ? dbNewArrivals : fallbackCatalog.Skip(4).Take(4).ToList();
+    var heroProducts = dbTrending.Any() ? dbTrending.Take(4).ToList() : fallbackCatalog.Take(4).ToList();
+
+    var audioCatId = categories.FirstOrDefault(c => c.Name != null && c.Name.Contains("Audio", StringComparison.OrdinalIgnoreCase))?.Id ?? 1;
+    var wearablesCatId = categories.FirstOrDefault(c => c.Name != null && c.Name.Contains("Wearable", StringComparison.OrdinalIgnoreCase))?.Id ?? 2;
+    var gamingCatId = categories.FirstOrDefault(c => c.Name != null && c.Name.Contains("Gaming", StringComparison.OrdinalIgnoreCase))?.Id ?? 3;
+    var computingCatId = categories.FirstOrDefault(c => c.Name != null && c.Name.Contains("Computing", StringComparison.OrdinalIgnoreCase))?.Id ?? 4;
+    var powerCatId = categories.FirstOrDefault(c => c.Name != null && c.Name.Contains("Power", StringComparison.OrdinalIgnoreCase))?.Id ?? 5;
+
+    string ResolveImg(string? rawUrl, string fallback = "/images/HomePage/HomeProductImg.png")
+    {
+        if (string.IsNullOrWhiteSpace(rawUrl)) return fallback;
+        if (rawUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase) || rawUrl.StartsWith("/")) return rawUrl;
+        if (rawUrl.StartsWith("~/")) return rawUrl.Substring(1);
+        if (rawUrl.StartsWith("images/", StringComparison.OrdinalIgnoreCase)) return "/" + rawUrl;
+        return "/images/" + rawUrl;
+    }
 }
 
-<!-- 1. ELECTRIC AURORA HERO SECTION WITH GIANT 3D PRODUCT STAGE -->
-<div class="hero-aurora-wrapper">
-    <div class="hero-aurora-orb orb-1"></div>
-    <div class="hero-aurora-orb orb-2"></div>
-    <div class="hero-aurora-orb orb-3"></div>
+<style>
+    /* === GUARANTEED VISIBLE ANIMATIONS & MODERN UI === */
+    @@keyframes ktFadeUp {
+        0% { opacity: 0; transform: translateY(22px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
 
-    <div class="hero-aurora-grid">
-        <!-- Left Column: Hero Copy, Multi-Page CTAs & Live Proof Metrics -->
-        <div class="hero-aurora-left">
-            <div class="hero-eyebrow-pill">
+    @@keyframes ktFloat3D {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-14px) rotate(-1.5deg); }
+    }
+
+    @@keyframes ktPulseOrb {
+        0%, 100% { transform: scale(1); opacity: 0.55; }
+        50% { transform: scale(1.12); opacity: 0.85; }
+    }
+
+    .kt-anim-section {
+        animation: ktFadeUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    /* 1. HERO SECTION */
+    .kt-hero-box {
+        position: relative;
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #31104b 100%);
+        border-radius: 28px;
+        padding: 3rem 2.75rem;
+        margin: 1.5rem 0 3rem;
+        color: #ffffff;
+        overflow: hidden;
+        box-shadow: 0 25px 60px -15px rgba(30, 27, 75, 0.45);
+    }
+
+    .kt-hero-glow-1 {
+        position: absolute;
+        top: -90px;
+        left: -80px;
+        width: 320px;
+        height: 320px;
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.45) 0%, transparent 70%);
+        filter: blur(30px);
+        pointer-events: none;
+    }
+
+    .kt-hero-glow-2 {
+        position: absolute;
+        bottom: -100px;
+        right: -60px;
+        width: 360px;
+        height: 360px;
+        background: radial-gradient(circle, rgba(236, 72, 153, 0.4) 0%, transparent 70%);
+        filter: blur(35px);
+        pointer-events: none;
+    }
+
+    .kt-hero-grid {
+        position: relative;
+        z-index: 2;
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 2.5rem;
+        align-items: center;
+    }
+
+    @@media (max-width: 992px) {
+        .kt-hero-grid {
+            grid-template-columns: 1fr;
+        }
+        .kt-hero-box {
+            padding: 2rem 1.5rem;
+        }
+    }
+
+    .kt-eyebrow-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        padding: 0.4rem 1rem;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #e0e7ff;
+        margin-bottom: 1.25rem;
+    }
+
+    .kt-hero-heading {
+        font-size: clamp(2.2rem, 4vw, 3.35rem);
+        font-weight: 800;
+        line-height: 1.12;
+        margin-bottom: 1rem;
+        color: #ffffff;
+    }
+
+    .kt-gradient-span {
+        background: linear-gradient(90deg, #818cf8, #f472b6, #38bdf8);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .kt-hero-lead {
+        font-size: 1.02rem;
+        color: #cbd5e1;
+        line-height: 1.65;
+        margin-bottom: 1.75rem;
+        max-width: 540px;
+    }
+
+    .kt-hero-btns {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .kt-btn-primary {
+        background: linear-gradient(135deg, #6366f1, #ec4899);
+        color: #ffffff !important;
+        font-weight: 700;
+        padding: 0.8rem 1.65rem;
+        border-radius: 999px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 12px 25px -6px rgba(99, 102, 241, 0.6);
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .kt-btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 16px 32px -6px rgba(236, 72, 153, 0.7);
+    }
+
+    .kt-btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: #ffffff !important;
+        font-weight: 600;
+        padding: 0.8rem 1.5rem;
+        border-radius: 999px;
+        text-decoration: none;
+        transition: background 0.25s ease, transform 0.25s ease;
+    }
+
+    .kt-btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .kt-hero-metrics {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.75rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .kt-metric-num {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #ffffff;
+        display: block;
+    }
+
+    .kt-metric-txt {
+        font-size: 0.78rem;
+        color: #94a3b8;
+    }
+
+    /* RIGHT SIDE HERO PRODUCT SHOWCASE CARD */
+    .kt-hero-stage-card {
+        position: relative;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 24px;
+        padding: 1.75rem;
+        backdrop-filter: blur(16px);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+        transition: transform 0.2s ease-out;
+    }
+
+    .kt-stage-top-badges {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .kt-stage-pill {
+        background: rgba(99, 102, 241, 0.35);
+        border: 1px solid rgba(129, 140, 248, 0.5);
+        color: #e0e7ff;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.3rem 0.8rem;
+        border-radius: 999px;
+    }
+
+    .kt-stage-pill-gold {
+        background: rgba(245, 158, 11, 0.25);
+        border: 1px solid rgba(251, 191, 36, 0.5);
+        color: #fde68a;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.3rem 0.8rem;
+        border-radius: 999px;
+    }
+
+    .kt-hero-slide {
+        display: none;
+    }
+
+    .kt-hero-slide.active {
+        display: block;
+        animation: ktFadeUp 0.45s ease both;
+    }
+
+    .kt-stage-img-box {
+        position: relative;
+        height: 250px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0.75rem 0;
+    }
+
+    .kt-stage-halo {
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(129, 140, 248, 0.55) 0%, rgba(236, 72, 153, 0.25) 55%, transparent 75%);
+        border-radius: 50%;
+        filter: blur(18px);
+        animation: ktPulseOrb 3.5s ease-in-out infinite;
+    }
+
+    .kt-stage-img {
+        position: relative;
+        z-index: 2;
+        max-height: 225px;
+        max-width: 90%;
+        object-fit: contain;
+        filter: drop-shadow(0 18px 25px rgba(0, 0, 0, 0.5));
+        animation: ktFloat3D 4s ease-in-out infinite;
+    }
+
+    .kt-stage-info {
+        background: rgba(15, 23, 42, 0.65);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        padding: 1rem 1.15rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .kt-stage-title {
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 1rem;
+        text-decoration: none;
+        display: block;
+        margin-bottom: 0.2rem;
+    }
+
+    .kt-stage-price {
+        color: #38bdf8;
+        font-weight: 800;
+        font-size: 1.15rem;
+    }
+
+    .kt-stage-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+    }
+
+    .kt-dot {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.3);
+        margin-right: 6px;
+        cursor: pointer;
+        transition: all 0.25s ease;
+    }
+
+    .kt-dot.active {
+        width: 24px;
+        background: #818cf8;
+    }
+
+    .kt-arrow-btn {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #fff;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+
+    .kt-arrow-btn:hover {
+        background: #6366f1;
+    }
+
+    /* === RICH PRODUCT CARDS (LIGHT & DARK THEME COMPATIBLE) === */
+    .kt-products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.25rem;
+    }
+
+    .kt-RichCard {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        box-shadow: 0 10px 25px -8px rgba(15, 23, 42, 0.08);
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+    }
+
+    .kt-RichCard:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 22px 40px -12px rgba(99, 102, 241, 0.22);
+        border-color: #818cf8;
+    }
+
+    .kt-RichCard-imgbox {
+        position: relative;
+        height: 215px;
+        background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.25rem;
+        overflow: hidden;
+    }
+
+    .kt-RichCard-img {
+        max-height: 175px;
+        max-width: 92%;
+        object-fit: contain;
+        transition: transform 0.4s ease;
+    }
+
+    .kt-RichCard:hover .kt-RichCard-img {
+        transform: scale(1.08) translateY(-4px);
+    }
+
+    .kt-badge-top-left {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: linear-gradient(135deg, #6366f1, #ec4899);
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.28rem 0.7rem;
+        border-radius: 999px;
+        z-index: 2;
+    }
+
+    .kt-badge-top-right {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: #dcfce7;
+        color: #15803d;
+        border: 1px solid #86efac;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.25rem 0.65rem;
+        border-radius: 999px;
+        z-index: 2;
+    }
+
+    .kt-badge-top-right.low {
+        background: #fef3c7;
+        color: #b45309;
+        border-color: #fde68a;
+    }
+
+    .kt-RichCard-body {
+        padding: 1.2rem 1.25rem 1.3rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+
+    .kt-RichCard-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.76rem;
+        margin-bottom: 0.35rem;
+    }
+
+    .kt-RichCard-cat {
+        color: #6366f1;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    .kt-RichCard-stars {
+        color: #f59e0b;
+        font-weight: 700;
+    }
+
+    .kt-RichCard-title {
+        font-size: 1.02rem;
+        font-weight: 700;
+        color: #0f172a;
+        text-decoration: none;
+        line-height: 1.35;
+        margin-bottom: 0.4rem;
+        display: block;
+    }
+
+    .kt-RichCard-title:hover {
+        color: #4f46e5;
+    }
+
+    .kt-RichCard-desc {
+        font-size: 0.82rem;
+        color: #64748b;
+        line-height: 1.45;
+        margin-bottom: 0.75rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .kt-RichCard-specs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .kt-spec-pill {
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 0.22rem 0.55rem;
+        border-radius: 6px;
+        background: #eef2ff;
+        color: #4338ca;
+    }
+
+    .kt-spec-pill.green {
+        background: #ecfdf5;
+        color: #047857;
+    }
+
+    .kt-stock-progress {
+        margin-bottom: 0.9rem;
+    }
+
+    .kt-stock-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.72rem;
+        color: #64748b;
+        margin-bottom: 0.25rem;
+        font-weight: 500;
+    }
+
+    .kt-stock-bar {
+        height: 6px;
+        background: #f1f5f9;
+        border-radius: 999px;
+        overflow: hidden;
+    }
+
+    .kt-stock-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #6366f1, #10b981);
+        border-radius: 999px;
+    }
+
+    .kt-RichCard-footer {
+        margin-top: auto;
+        padding-top: 0.8rem;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+
+    .kt-price-main {
+        font-size: 1.18rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .kt-price-old {
+        font-size: 0.78rem;
+        color: #94a3b8;
+        text-decoration: line-through;
+        margin-left: 4px;
+    }
+
+    .kt-card-actions {
+        display: flex;
+        gap: 0.4rem;
+    }
+
+    .kt-btn-spec {
+        padding: 0.45rem 0.8rem;
+        border-radius: 10px;
+        border: 1px solid #cbd5e1;
+        color: #334155;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .kt-btn-spec:hover {
+        border-color: #6366f1;
+        color: #4f46e5;
+        background: #eef2ff;
+    }
+
+    .kt-btn-cart {
+        padding: 0.45rem 0.9rem;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: #ffffff !important;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .kt-btn-cart:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 14px rgba(99, 102, 241, 0.4);
+    }
+</style>
+
+<!-- 1. HERO SECTION WITH RIGHT-SIDE 3D PRODUCT STAGE -->
+<div class="kt-hero-box kt-anim-section">
+    <div class="kt-hero-glow-1"></div>
+    <div class="kt-hero-glow-2"></div>
+
+    <div class="kt-hero-grid">
+        <!-- Left Column -->
+        <div>
+            <div class="kt-eyebrow-badge">
                 <span class="kt-pulse-dot"></span>
                 <span>New Collection 2026 · Bangladesh</span>
             </div>
 
-            <h1 class="hero-aurora-title">
+            <h1 class="kt-hero-heading">
                 Upgrade Your<br />
-                <span class="hero-gradient-text">Tech Lifestyle.</span>
+                <span class="kt-gradient-span">Tech Lifestyle.</span>
             </h1>
 
-            <p class="hero-aurora-sub">
-                Discover flagship gaming laptops, ANC wireless audio, mechanical keyboards, and smart wearables — delivered to your doorstep in your chosen time slot.
+            <p class="kt-hero-lead">
+                Discover flagship gaming laptops, ANC wireless audio, hot-swap mechanical keyboards, and smart wearables — delivered to your doorstep in your chosen time slot.
             </p>
 
-            <div class="hero-cta-group">
-                <a asp-controller="Product" asp-action="Index" class="btn-aurora-primary">
+            <div class="kt-hero-btns">
+                <a asp-controller="Product" asp-action="Index" class="kt-btn-primary">
                     <span>Shop All Gadgets</span>
-                    <span class="btn-arrow">→</span>
+                    <span>→</span>
                 </a>
-                <a href="#categoriesSection" class="btn-aurora-glass">
+                <a href="#categoriesSection" class="kt-btn-secondary">
                     Explore Categories
                 </a>
             </div>
 
-            <div class="hero-metrics-bar">
-                <div class="hero-metric-item">
-                    <span class="hero-metric-val">4.9 ★</span>
-                    <span class="hero-metric-lbl">2,400+ Verified Reviews</span>
+            <div class="kt-hero-metrics">
+                <div>
+                    <span class="kt-metric-num">4.9 ★</span>
+                    <span class="kt-metric-txt">2,400+ Verified Reviews</span>
                 </div>
-                <div class="hero-metric-item">
-                    <span class="hero-metric-val">4 Slots</span>
-                    <span class="hero-metric-lbl">Custom Delivery Windows</span>
+                <div>
+                    <span class="kt-metric-num">4 Slots</span>
+                    <span class="kt-metric-txt">Custom Delivery Windows</span>
                 </div>
-                <div class="hero-metric-item">
-                    <span class="hero-metric-val">100%</span>
-                    <span class="hero-metric-lbl">Official Brand Warranty</span>
+                <div>
+                    <span class="kt-metric-num">100%</span>
+                    <span class="kt-metric-txt">Official Brand Warranty</span>
                 </div>
             </div>
         </div>
 
-        <!-- Right Column: Interactive 3D Product Showcase Stage -->
-        @if (Model != null && Model.Products != null && Model.Products.Any())
-        {
-            var slideIndex = 0;
-            <div class="hero-3d-stage-col">
-                <div class="hero-3d-stage" id="hero3DStage">
-                    <div class="hero-3d-tilt-card" id="hero3DTiltCard">
+        <!-- Right Column: Interactive Product Image Stage -->
+        <div>
+            <div class="kt-hero-stage-card" id="heroStageCard">
+                <div class="kt-stage-top-badges">
+                    <span class="kt-stage-pill">⚡ Flagship 3D Showcase</span>
+                    <span class="kt-stage-pill-gold">★ Top Rated Gear</span>
+                </div>
 
-                        <!-- Floating 3D Depth Badges -->
-                        <div class="hero-float-badge badge-top-left">
-                            <span class="badge-dot"></span>
-                            <span>Flagship 3D Showcase</span>
-                        </div>
-                        <div class="hero-float-badge badge-top-right">
-                            <span>★ Top Rated Gear</span>
-                        </div>
+                <div id="heroSlidesViewport">
+                    @{
+                        var sIdx = 0;
+                        var defaultHeroImgs = new[] {
+                            "/images/HomePage/HomeProductImg.png",
+                            "/images/HomePage/HomeProductImg-1.png",
+                            "/images/amzefitwatch1.jpg",
+                            "/images/HomePage/HomeProductImg-2.png"
+                        };
+                    }
+                    @foreach (var prod in heroProducts)
+                    {
+                        var fbImg = defaultHeroImgs[sIdx % defaultHeroImgs.Length];
+                        var heroImg = ResolveImg(prod.ImageUrl, fbImg);
 
-                        <!-- 5-Product 3D Slides -->
-                        <div class="hero-3d-slides-viewport">
-                            @foreach (var product in Model.Products.Take(5))
-                            {
-                                <div class="hero-slide @(slideIndex == 0 ? "active" : "")">
-                                    <div class="hero-3d-product-frame">
-                                        <!-- Ambient 3D Backlight Behind Product -->
-                                        <div class="hero-3d-backlight"></div>
+                        <div class="kt-hero-slide @(sIdx == 0 ? "active" : "")">
+                            <div class="kt-stage-img-box">
+                                <div class="kt-stage-halo"></div>
+                                <a asp-controller="Product" asp-action="Details" asp-route-id="@prod.Id">
+                                    <img src="@heroImg"
+                                         alt="@prod.Name"
+                                         class="kt-stage-img"
+                                         onerror="this.onerror=null;this.src='@fbImg';" />
+                                </a>
+                            </div>
 
-                                        <!-- Clickable Giant 3D Product Image -->
-                                        <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id" class="hero-3d-img-link">
-                                            <img src="@product.ImageUrl"
-                                                 alt="@product.Name"
-                                                 class="hero-3d-product-img"
-                                                 onerror="this.src='/images/HomePage/HomeProductImg.png'" />
-                                        </a>
-
-                                        <!-- 3D Floor Reflection Pedestal -->
-                                        <div class="hero-3d-pedestal"></div>
-                                    </div>
-
-                                    <!-- Product Info & Direct Multi-Page Actions -->
-                                    <div class="hero-3d-info-bar">
-                                        <div class="hero-3d-meta">
-                                            <span class="hero-3d-cat-tag">
-                                                @(product.Category != null ? product.Category.Name : "Featured Gadget")
-                                            </span>
-                                            <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id" class="hero-3d-product-title">
-                                                @product.Name
-                                            </a>
-                                            <div class="hero-3d-price-row">
-                                                <span class="hero-3d-price">৳@product.Price.ToString("N2")</span>
-                                                <span class="hero-3d-warranty">· Official Warranty</span>
-                                            </div>
-                                        </div>
-
-                                        <div class="hero-3d-actions">
-                                            <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id" class="btn-hero-details">
-                                                Details
-                                            </a>
-                                            <a asp-controller="Cart" asp-action="Add" asp-route-id="@product.Id" class="btn-hero-cart">
-                                                + Add to Cart
-                                            </a>
-                                        </div>
-                                    </div>
+                            <div class="kt-stage-info">
+                                <div>
+                                    <span style="font-size:0.72rem; color:#a5b4fc; font-weight:700; text-transform:uppercase;">
+                                        @(prod.Category != null ? prod.Category.Name : "Featured Flagship")
+                                    </span>
+                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@prod.Id" class="kt-stage-title">
+                                        @prod.Name
+                                    </a>
+                                    <span class="kt-stage-price">৳@prod.Price.ToString("N0")</span>
+                                    <span style="font-size:0.75rem; color:#cbd5e1;"> · Official Warranty</span>
                                 </div>
-                                slideIndex++;
-                            }
-                        </div>
-
-                        <!-- Slider Dots & Prev/Next Controls -->
-                        <div class="hero-3d-controls">
-                            <div class="hero-dots">
-                                @for (int i = 0; i < Math.Min(Model.Products.Count, 5); i++)
-                                {
-                                    <span class="hero-dot @(i == 0 ? "active" : "")" onclick="goToSlide(@i)"></span>
-                                }
-                            </div>
-                            <div class="hero-nav-arrows">
-                                <button type="button" class="hero-arrow-btn" onclick="prevSlide()" aria-label="Previous Slide">←</button>
-                                <button type="button" class="hero-arrow-btn" onclick="nextSlide()" aria-label="Next Slide">→</button>
+                                <div class="d-flex gap-2">
+                                    <a asp-controller="Cart" asp-action="Add" asp-route-id="@prod.Id" class="kt-btn-primary" style="padding: 0.55rem 1.1rem; font-size: 0.82rem;">
+                                        + Cart
+                                    </a>
+                                </div>
                             </div>
                         </div>
+                        sIdx++;
+                    }
+                </div>
 
+                <div class="kt-stage-controls">
+                    <div id="heroDotsContainer">
+                        @for (int i = 0; i < heroProducts.Count; i++)
+                        {
+                            <span class="kt-dot @(i == 0 ? "active" : "")" onclick="goToHeroSlide(@i)"></span>
+                        }
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="kt-arrow-btn" onclick="prevHeroSlide()">←</button>
+                        <button type="button" class="kt-arrow-btn" onclick="nextHeroSlide()">→</button>
                     </div>
                 </div>
             </div>
-        }
+        </div>
     </div>
 </div>
 
 <!-- 2. VIBRANT BENTO CATEGORY SHOWCASE -->
-<div class="home-section" id="categoriesSection">
+<div class="home-section kt-anim-section" id="categoriesSection">
     <div class="section-header-row">
         <div>
             <span class="section-eyebrow">Curated Departments</span>
@@ -164,7 +739,6 @@
     </div>
 
     <div class="bento-grid-aurora">
-        <!-- Large Left Tile: Gaming Gear -->
         <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@gamingCatId" class="bento-card bento-large bento-gaming">
             <div class="bento-content">
                 <span class="bento-pill">Pro Esports Setup</span>
@@ -172,27 +746,20 @@
                 <p class="bento-desc">High-refresh gaming laptops, RGB mechanical keyboards &amp; surround headsets.</p>
                 <span class="bento-cta-btn">Explore Gaming →</span>
             </div>
-            <img src="/images/HomePage/HomeProductImg.png"
-                 alt="Gaming Gear"
-                 class="bento-img-3d bento-img-large" />
+            <img src="/images/HomePage/HomeProductImg.png" alt="Gaming Gear" class="bento-img-3d bento-img-large" />
         </a>
 
-        <!-- Right 2x2 Grid -->
         <div class="bento-subgrid">
-            <!-- Audio -->
             <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@audioCatId" class="bento-card bento-small bento-audio">
                 <div class="bento-content">
                     <span class="bento-tag">Hi-Res &amp; ANC</span>
                     <h3 class="bento-title-sm">Audio &amp; Earbuds</h3>
-                    <p class="bento-sub">Wireless Buds &amp; Speakers</p>
+                    <p class="bento-sub">Wireless Buds &amp; Headsets</p>
                 </div>
                 <span class="bento-link-inline">Shop Audio →</span>
-                <img src="/images/HomePage/HomeProductImg-1.png"
-                     alt="Audio"
-                     class="bento-img-3d bento-img-sm" />
+                <img src="/images/HomePage/HomeProductImg-1.png" alt="Audio" class="bento-img-3d bento-img-sm" />
             </a>
 
-            <!-- Smart Wearables -->
             <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@wearablesCatId" class="bento-card bento-small bento-wearables">
                 <div class="bento-content">
                     <span class="bento-tag">Fitness &amp; Health</span>
@@ -200,12 +767,9 @@
                     <p class="bento-sub">Amazfit &amp; Fitness Bands</p>
                 </div>
                 <span class="bento-link-inline">Shop Watches →</span>
-                <img src="/images/amzefitwatch1.jpg"
-                     alt="Smartwatches"
-                     class="bento-img-3d bento-img-sm" />
+                <img src="/images/amzefitwatch1.jpg" alt="Smartwatches" class="bento-img-3d bento-img-sm" />
             </a>
 
-            <!-- Computing -->
             <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@computingCatId" class="bento-card bento-small bento-computing">
                 <div class="bento-content">
                     <span class="bento-tag">Workstation</span>
@@ -213,29 +777,24 @@
                     <p class="bento-sub">Wireless Combos &amp; Hubs</p>
                 </div>
                 <span class="bento-link-inline">Shop Peripherals →</span>
-                <img src="/images/HomePage/HomeProductImg-2.png"
-                     alt="Computing"
-                     class="bento-img-3d bento-img-sm" />
+                <img src="/images/HomePage/HomeProductImg-2.png" alt="Computing" class="bento-img-3d bento-img-sm" />
             </a>
 
-            <!-- Power & Charging -->
             <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@powerCatId" class="bento-card bento-small bento-power">
                 <div class="bento-content">
-                    <span class="bento-tag">GaN &amp; 50W Max</span>
+                    <span class="bento-tag">GaN &amp; 65W Max</span>
                     <h3 class="bento-title-sm">Power &amp; Charging</h3>
                     <p class="bento-sub">Power Banks &amp; Adapters</p>
                 </div>
                 <span class="bento-link-inline">Shop Power →</span>
-                <img src="/images/HomePage/HomeProductImg-3.png"
-                     alt="Power & Charging"
-                     class="bento-img-3d bento-img-sm" />
+                <img src="/images/HomePage/HomeProductImg-3.png" alt="Power & Charging" class="bento-img-3d bento-img-sm" />
             </a>
         </div>
     </div>
 </div>
 
-<!-- 3. TRENDING PRODUCTS SECTION -->
-<div class="home-section">
+<!-- 3. TRENDING PRODUCTS SECTION (RICH DETAILED CARDS) -->
+<div class="home-section kt-anim-section">
     <div class="section-header-row">
         <div>
             <span class="section-eyebrow">Top Picks For You</span>
@@ -251,83 +810,94 @@
         </div>
     </div>
 
-    @if (trendingProducts != null && trendingProducts.Any())
-    {
-        <div class="product-grid">
-            @foreach (var item in trendingProducts)
-            {
-                <div class="product-card product-card-v2">
-                    <div class="product-img-wrap">
-                        <span class="product-badge-pill">Trending</span>
-                        @if (item.Stock <= 5 && item.Stock > 0)
-                        {
-                            <span class="product-stock-pill low">Only @item.Stock left</span>
-                        }
-                        else if (item.Stock > 5)
-                        {
-                            <span class="product-stock-pill ok">In Stock</span>
-                        }
-                        <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" class="product-img-link">
-                            <img src="@item.ImageUrl"
-                                 class="product-img"
-                                 alt="@item.Name"
-                                 onerror="this.src='/images/HomePage/HomeProductImg.png'" />
-                        </a>
+    <div class="kt-products-grid">
+        @foreach (var item in trendingProducts)
+        {
+            var imgSrc = ResolveImg(item.ImageUrl, "/images/HomePage/HomeProductImg.png");
+            var oldPrice = item.Price * 1.15m;
+            var isLow = item.Stock > 0 && item.Stock <= 5;
+            var stockPct = Math.Clamp(item.Stock * 6, 18, 100);
+            var reviews = 48 + ((item.Id * 17) % 90);
+
+            <div class="kt-RichCard">
+                <div class="kt-RichCard-imgbox">
+                    <span class="kt-badge-top-left">🔥 Trending</span>
+                    <span class="kt-badge-top-right @(isLow ? "low" : "")">
+                        @(isLow ? $"Only {item.Stock} left" : "In Stock")
+                    </span>
+                    <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id">
+                        <img src="@imgSrc"
+                             alt="@item.Name"
+                             class="kt-RichCard-img"
+                             onerror="this.onerror=null;this.src='/images/HomePage/HomeProductImg.png';" />
+                    </a>
+                </div>
+
+                <div class="kt-RichCard-body">
+                    <div class="kt-RichCard-meta">
+                        <span class="kt-RichCard-cat">@(item.Category != null ? item.Category.Name : "Flagship Tech")</span>
+                        <span class="kt-RichCard-stars">★★★★★ (4.9 · @reviews)</span>
                     </div>
-                    <div class="product-body">
-                        <div class="product-cat-label">
-                            @(item.Category != null ? item.Category.Name : "Tech Accessory")
+
+                    <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" class="kt-RichCard-title">
+                        @item.Name
+                    </a>
+
+                    <p class="kt-RichCard-desc">
+                        @(!string.IsNullOrWhiteSpace(item.Description)
+                            ? item.Description
+                            : "Official brand warranty, low-latency performance, and premium build quality engineered for power users.")
+                    </p>
+
+                    <div class="kt-RichCard-specs">
+                        <span class="kt-spec-pill">🛡 1 Yr Warranty</span>
+                        <span class="kt-spec-pill green">🚚 Express Dispatch</span>
+                        <span class="kt-spec-pill">⚡ 100% Genuine</span>
+                    </div>
+
+                    <div class="kt-stock-progress">
+                        <div class="kt-stock-labels">
+                            <span>Availability</span>
+                            <span>@(item.Stock > 0 ? $"{item.Stock} units ready" : "In Stock")</span>
                         </div>
-                        <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" style="text-decoration:none;">
-                            <div class="product-title">@item.Name</div>
-                        </a>
-                        <div class="product-price-footer">
-                            <div>
-                                <span class="price-caption">Price</span>
-                                <div class="product-price">৳@item.Price.ToString("N2")</div>
-                            </div>
-                            <div class="product-card-btns">
-                                <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" class="btn-card-outline">
-                                    View
-                                </a>
-                                <a asp-controller="Cart" asp-action="Add" asp-route-id="@item.Id" class="btn-main btn-card-add">
-                                    + Cart
-                                </a>
-                            </div>
+                        <div class="kt-stock-bar">
+                            <div class="kt-stock-bar-fill" style="width: @(stockPct)%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="kt-RichCard-footer">
+                        <div>
+                            <span style="font-size:0.7rem; color:#64748b; display:block;">Special Price</span>
+                            <span class="kt-price-main">৳@item.Price.ToString("N0")</span>
+                            <span class="kt-price-old">৳@oldPrice.ToString("N0")</span>
+                        </div>
+                        <div class="kt-card-actions">
+                            <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" class="kt-btn-spec">Specs</a>
+                            <a asp-controller="Cart" asp-action="Add" asp-route-id="@item.Id" class="kt-btn-cart">+ Cart</a>
                         </div>
                     </div>
                 </div>
-            }
-        </div>
-    }
-    else
-    {
-        <p class="text-muted">No trending products found.</p>
-    }
+            </div>
+        }
+    </div>
 </div>
 
 <!-- 4. FLASH DEAL PROMO BANNER -->
-<div class="promo-aurora-banner">
+<div class="promo-aurora-banner kt-anim-section">
     <div class="promo-aurora-glow"></div>
     <div class="promo-aurora-content">
         <span class="promo-flash-tag">⚡ Flash Deal of the Week</span>
         <h2>Save Up To <span class="promo-highlight">40% Off</span> Selected Pro Audio &amp; Gaming Gear</h2>
         <p>Grab limited-stock bundles with express Dhaka dispatch and flexible 4-slot delivery scheduling at checkout.</p>
         <div class="promo-cta-row">
-            <a asp-controller="Product" asp-action="Index" class="btn-promo-gold">
-                Shop Flash Deals →
-            </a>
-            <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@gamingCatId" class="btn-promo-outline">
-                Browse Gaming Gear
-            </a>
+            <a asp-controller="Product" asp-action="Index" class="btn-promo-gold">Shop Flash Deals →</a>
+            <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@gamingCatId" class="btn-promo-outline">Browse Gaming Gear</a>
         </div>
     </div>
     <div class="promo-aurora-spotlight">
         <div class="promo-spotlight-card">
             <span class="promo-discount-badge">-35% OFF</span>
-            <img src="/images/HomePage/HomeProductImg-1.png"
-                 alt="Gaming Headset"
-                 class="promo-spotlight-img" />
+            <img src="/images/HomePage/HomeProductImg-1.png" alt="Gaming Headset" class="promo-spotlight-img" />
             <div class="promo-spotlight-title">Pro RGB Gaming &amp; ANC Audio</div>
             <div class="promo-spotlight-sub">Official Brand Warranty · Express Delivery</div>
         </div>
@@ -335,7 +905,7 @@
 </div>
 
 <!-- 5. NEW ARRIVALS SECTION -->
-<div class="home-section">
+<div class="home-section kt-anim-section">
     <div class="section-header-row">
         <div>
             <span class="section-eyebrow">Fresh In Stock</span>
@@ -346,55 +916,66 @@
         </a>
     </div>
 
-    @if (newArrivals != null && newArrivals.Any())
-    {
-        <div class="product-grid">
-            @foreach (var item in newArrivals)
-            {
-                <div class="product-card product-card-v2">
-                    <div class="product-img-wrap">
-                        <span class="product-badge-pill badge-new">New</span>
-                        <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" class="product-img-link">
-                            <img src="@item.ImageUrl"
-                                 class="product-img"
-                                 alt="@item.Name"
-                                 onerror="this.src='/images/HomePage/HomeProductImg.png'" />
-                        </a>
+    <div class="kt-products-grid">
+        @foreach (var item in newArrivals)
+        {
+            var imgSrc = ResolveImg(item.ImageUrl, "/images/HomePage/HomeProductImg-2.png");
+            var oldPrice = item.Price * 1.12m;
+            var reviews = 29 + ((item.Id * 13) % 65);
+
+            <div class="kt-RichCard">
+                <div class="kt-RichCard-imgbox">
+                    <span class="kt-badge-top-left" style="background: linear-gradient(135deg, #10b981, #059669);">✨ New Arrival</span>
+                    <span class="kt-badge-top-right">Ready to Ship</span>
+                    <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id">
+                        <img src="@imgSrc"
+                             alt="@item.Name"
+                             class="kt-RichCard-img"
+                             onerror="this.onerror=null;this.src='/images/HomePage/HomeProductImg-2.png';" />
+                    </a>
+                </div>
+
+                <div class="kt-RichCard-body">
+                    <div class="kt-RichCard-meta">
+                        <span class="kt-RichCard-cat">@(item.Category != null ? item.Category.Name : "2026 Edition")</span>
+                        <span class="kt-RichCard-stars">★★★★★ (5.0 · @reviews)</span>
                     </div>
-                    <div class="product-body">
-                        <div class="product-cat-label">
-                            @(item.Category != null ? item.Category.Name : "New Arrival")
+
+                    <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" class="kt-RichCard-title">
+                        @item.Name
+                    </a>
+
+                    <p class="kt-RichCard-desc">
+                        @(!string.IsNullOrWhiteSpace(item.Description)
+                            ? item.Description
+                            : "Next-generation release featuring upgraded hardware, official brand warranty, and fast Bangladesh delivery.")
+                    </p>
+
+                    <div class="kt-RichCard-specs">
+                        <span class="kt-spec-pill">✨ 2026 Model</span>
+                        <span class="kt-spec-pill green">📦 4-Slot Delivery</span>
+                        <span class="kt-spec-pill">🔒 Official Warranty</span>
+                    </div>
+
+                    <div class="kt-RichCard-footer">
+                        <div>
+                            <span style="font-size:0.7rem; color:#64748b; display:block;">Launch Price</span>
+                            <span class="kt-price-main">৳@item.Price.ToString("N0")</span>
+                            <span class="kt-price-old">৳@oldPrice.ToString("N0")</span>
                         </div>
-                        <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" style="text-decoration:none;">
-                            <div class="product-title">@item.Name</div>
-                        </a>
-                        <div class="product-price-footer">
-                            <div>
-                                <span class="price-caption">Price</span>
-                                <div class="product-price">৳@item.Price.ToString("N2")</div>
-                            </div>
-                            <div class="product-card-btns">
-                                <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" class="btn-card-outline">
-                                    View
-                                </a>
-                                <a asp-controller="Cart" asp-action="Add" asp-route-id="@item.Id" class="btn-main btn-card-add">
-                                    + Cart
-                                </a>
-                            </div>
+                        <div class="kt-card-actions">
+                            <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" class="kt-btn-spec">Specs</a>
+                            <a asp-controller="Cart" asp-action="Add" asp-route-id="@item.Id" class="kt-btn-cart">+ Cart</a>
                         </div>
                     </div>
                 </div>
-            }
-        </div>
-    }
-    else
-    {
-        <p class="text-muted">No new arrivals available.</p>
-    }
+            </div>
+        }
+    </div>
 </div>
 
 <!-- 6. WHY SHOP WITH KINTECH -->
-<div class="home-section">
+<div class="home-section kt-anim-section">
     <div class="text-center mb-4">
         <span class="section-eyebrow">The Kintech Promise</span>
         <h2 class="section-heading">Why Shop With Kintech?</h2>
@@ -429,7 +1010,7 @@
 </div>
 
 <!-- 7. FREE DELIVERY & STATS BANNER -->
-<div class="perks-banner">
+<div class="perks-banner kt-anim-section">
     <div class="perks-left">
         <span class="perks-pill">Limited Time</span>
         <h3>Free Delivery on Orders Over ৳2,000</h3>
@@ -451,3 +1032,32 @@
         </div>
     </div>
 </div>
+
+<script>
+    (function () {
+        let currentHeroIdx = 0;
+        const slides = document.querySelectorAll('#heroSlidesViewport .kt-hero-slide');
+        const dots = document.querySelectorAll('#heroDotsContainer .kt-dot');
+
+        window.showHeroSlide = function (index) {
+            if (!slides.length) return;
+            currentHeroIdx = (index + slides.length) % slides.length;
+            slides.forEach((s, i) => s.classList.toggle('active', i === currentHeroIdx));
+            dots.forEach((d, i) => d.classList.toggle('active', i === currentHeroIdx));
+        };
+
+        window.nextHeroSlide = function () {
+            window.showHeroSlide(currentHeroIdx + 1);
+        };
+
+        window.prevHeroSlide = function () {
+            window.showHeroSlide(currentHeroIdx - 1);
+        };
+
+        window.goToHeroSlide = function (index) {
+            window.showHeroSlide(index);
+        };
+
+        setInterval(() => window.nextHeroSlide(), 4500);
+    })();
+</script>

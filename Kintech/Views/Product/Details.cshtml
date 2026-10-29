@@ -1,0 +1,779 @@
+﻿@model Kintech.Models.Product
+
+@{
+    ViewData["Title"] = Model.Name;
+
+    string ResolveImg(string? rawUrl, string fallback = "/images/HomePage/HomeProductImg.png")
+    {
+        if (string.IsNullOrWhiteSpace(rawUrl)) return fallback;
+        if (rawUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase) || rawUrl.StartsWith("/")) return rawUrl;
+        if (rawUrl.StartsWith("~/")) return rawUrl.Substring(1);
+        if (rawUrl.StartsWith("images/", StringComparison.OrdinalIgnoreCase)) return "/" + rawUrl;
+        return "/images/" + rawUrl;
+    }
+
+    var imgSrc = ResolveImg(Model.ImageUrl);
+    var catName = Model.Category != null ? Model.Category.Name : "Flagship Tech";
+    var oldPrice = Math.Round(Model.Price * 1.15m, 0);
+    var saving = oldPrice - Model.Price;
+    var isOut = Model.Stock <= 0;
+    var isLow = Model.Stock > 0 && Model.Stock <= 5;
+    var stockPct = Math.Clamp(Model.Stock * 6, 12, 100);
+    var reviews = 34 + ((Model.Id * 19) % 110);
+    var related = (ViewBag.Related as IEnumerable<Kintech.Models.Product>)?.Where(p => p.Id != Model.Id).Take(4).ToList()
+                  ?? new List<Kintech.Models.Product>();
+}
+
+<style>
+    body:has(.kd-page) {
+        background:
+            radial-gradient(800px 480px at 8% -6%, rgba(79, 70, 229, 0.10), transparent 62%),
+            radial-gradient(700px 480px at 96% 6%, rgba(236, 72, 153, 0.08), transparent 62%),
+            #F6F8FF;
+        background-attachment: fixed;
+    }
+
+    .kd-page { padding: 1.25rem 0 4rem; }
+
+    @@keyframes kdFadeUp {
+        from { opacity: 0; transform: translateY(18px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @@keyframes kdPulse {
+        0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55); }
+        70%  { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* ---------- Breadcrumb ---------- */
+    .kd-crumbs {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-bottom: 1.25rem;
+    }
+
+    .kd-crumbs a { color: #64748b; text-decoration: none; font-weight: 500; transition: color 0.2s ease; }
+    .kd-crumbs a:hover { color: #4f46e5; }
+    .kd-crumbs .sep { opacity: 0.5; }
+    .kd-crumbs .current { color: #0f172a; font-weight: 700; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* ---------- Main grid ---------- */
+    .kd-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+        gap: 2.5rem;
+        align-items: start;
+    }
+
+    /* ---------- Gallery ---------- */
+    .kd-gallery { position: sticky; top: 20px; animation: kdFadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+    .kd-stage {
+        position: relative;
+        height: 520px;
+        border-radius: 32px;
+        background: linear-gradient(145deg, #eef2ff 0%, #f5f3ff 55%, #fdf2f8 100%);
+        border: 1px solid rgba(79, 70, 229, 0.12);
+        box-shadow: 0 30px 60px -28px rgba(79, 70, 229, 0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        cursor: zoom-in;
+    }
+
+    .kd-stage::before {
+        content: "";
+        position: absolute;
+        width: 340px;
+        height: 340px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(124, 58, 237, 0.22) 0%, rgba(6, 182, 212, 0.12) 45%, transparent 70%);
+        filter: blur(14px);
+        pointer-events: none;
+    }
+
+    .kd-img {
+        position: relative;
+        max-width: 82%;
+        max-height: 82%;
+        object-fit: contain;
+        mix-blend-mode: multiply;
+        filter: drop-shadow(0 28px 30px rgba(15, 23, 42, 0.22));
+        transition: transform 0.25s ease-out;
+        will-change: transform;
+    }
+
+    .kd-stage-badges {
+        position: absolute;
+        top: 18px;
+        left: 18px;
+        right: 18px;
+        display: flex;
+        justify-content: space-between;
+        z-index: 3;
+        pointer-events: none;
+    }
+
+    .kd-badge {
+        padding: 0.35rem 0.85rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.3px;
+    }
+
+    .kd-badge.official { background: linear-gradient(135deg, #6366f1, #ec4899); color: #fff; }
+    .kd-badge.save { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+
+    .kd-stage-hint {
+        position: absolute;
+        bottom: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 0.3rem 0.9rem;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.65);
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 600;
+        backdrop-filter: blur(6px);
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .kd-stage:hover .kd-stage-hint { opacity: 0; }
+
+    .kd-trust-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+
+    .kd-trust {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 0.85rem 0.5rem;
+        text-align: center;
+        font-size: 0.74rem;
+        font-weight: 700;
+        color: #334155;
+        box-shadow: 0 8px 18px -10px rgba(15, 23, 42, 0.12);
+        transition: transform 0.25s ease, border-color 0.25s ease;
+    }
+
+    .kd-trust:hover { transform: translateY(-3px); border-color: #a5b4fc; }
+    .kd-trust span { display: block; font-size: 1.35rem; margin-bottom: 0.2rem; }
+
+    /* ---------- Info panel ---------- */
+    .kd-info { animation: kdFadeUp 0.6s 0.1s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+    .kd-cat {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.9rem;
+        border-radius: 999px;
+        background: #eef2ff;
+        border: 1px solid #c7d2fe;
+        color: #4338ca;
+        font-size: 0.76rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        text-decoration: none;
+        transition: background 0.2s ease;
+    }
+
+    .kd-cat:hover { background: #e0e7ff; color: #3730a3; }
+
+    .kd-title {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 2.35rem;
+        font-weight: 800;
+        line-height: 1.12;
+        letter-spacing: -1px;
+        color: #0f172a;
+        margin: 0.9rem 0 0.7rem;
+    }
+
+    .kd-rating {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.88rem;
+        color: #64748b;
+        margin-bottom: 1.25rem;
+    }
+
+    .kd-stars { color: #f59e0b; font-weight: 800; letter-spacing: 1px; }
+
+    .kd-pricebox {
+        background: #fff;
+        border: 1px solid rgba(79, 70, 229, 0.14);
+        border-radius: 24px;
+        padding: 1.4rem 1.5rem;
+        box-shadow: 0 20px 40px -24px rgba(79, 70, 229, 0.35);
+        margin-bottom: 1.25rem;
+    }
+
+    .kd-price-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.85rem; }
+
+    .kd-price {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 2.6rem;
+        font-weight: 800;
+        letter-spacing: -1.2px;
+        background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 60%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .kd-price-old { font-size: 1.1rem; color: #94a3b8; text-decoration: line-through; }
+
+    .kd-save-chip {
+        padding: 0.25rem 0.7rem;
+        border-radius: 999px;
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        color: #047857;
+        font-size: 0.78rem;
+        font-weight: 800;
+    }
+
+    .kd-tax-note { font-size: 0.78rem; color: #94a3b8; margin-top: 0.3rem; }
+
+    .kd-stock { margin-top: 1.1rem; padding-top: 1.1rem; border-top: 1px dashed #e2e8f0; }
+
+    .kd-stock-line {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .kd-stock-state { display: inline-flex; align-items: center; gap: 0.5rem; color: #047857; }
+
+    .kd-stock-state::before {
+        content: "";
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #10b981;
+        animation: kdPulse 2s infinite;
+    }
+
+    .kd-stock-state.low { color: #b45309; }
+    .kd-stock-state.low::before { background: #f59e0b; box-shadow: none; animation: none; }
+    .kd-stock-state.out { color: #b91c1c; }
+    .kd-stock-state.out::before { background: #ef4444; animation: none; }
+
+    .kd-stock-units { color: #64748b; font-weight: 500; }
+
+    .kd-bar { height: 7px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
+    .kd-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #6366f1, #10b981); transition: width 0.8s ease; }
+    .kd-bar-fill.low { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+
+    /* ---------- Buttons ---------- */
+    .kd-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem; }
+    .kd-actions form { flex: 1 1 240px; margin: 0; }
+
+    .kd-btn-cart {
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        padding: 1rem 1.5rem;
+        border: none;
+        border-radius: 18px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 1.02rem;
+        font-weight: 800;
+        color: #fff;
+        background: linear-gradient(120deg, #4f46e5 0%, #3b82f6 50%, #7c3aed 100%);
+        background-size: 200% 100%;
+        box-shadow: 0 16px 30px -10px rgba(79, 70, 229, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+        transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease, background-position 0.5s ease;
+    }
+
+    .kd-btn-cart::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -80%;
+        z-index: -1;
+        width: 55%;
+        height: 100%;
+        background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+        transform: skewX(-22deg);
+        transition: left 0.7s ease;
+    }
+
+    .kd-btn-cart:hover {
+        background-position: 100% 0;
+        transform: translateY(-3px);
+        box-shadow: 0 24px 40px -10px rgba(79, 70, 229, 0.7), 0 0 0 4px rgba(79, 70, 229, 0.12);
+    }
+
+    .kd-btn-cart:hover::after { left: 130%; }
+    .kd-btn-cart:active { transform: scale(0.98); }
+    .kd-btn-cart:focus-visible { outline: 3px solid rgba(79, 70, 229, 0.45); outline-offset: 3px; }
+
+    .kd-btn-cart[disabled] {
+        background: #e2e8f0;
+        color: #64748b;
+        box-shadow: none;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .kd-btn-ghost {
+        padding: 1rem 1.4rem;
+        border-radius: 18px;
+        border: 1.5px solid #c7d2fe;
+        background: #fff;
+        color: #4338ca;
+        font-weight: 700;
+        font-size: 0.95rem;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.25s ease;
+    }
+
+    .kd-btn-ghost:hover { background: #eef2ff; transform: translateY(-2px); color: #3730a3; }
+
+    /* ---------- Perks list ---------- */
+    .kd-perks {
+        list-style: none;
+        margin: 0 0 1.5rem;
+        padding: 0;
+        display: grid;
+        gap: 0.65rem;
+    }
+
+    .kd-perks li {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        padding: 0.75rem 1rem;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        font-size: 0.88rem;
+        color: #334155;
+    }
+
+    .kd-perks .ic {
+        flex: 0 0 38px;
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #eef2ff, #f5f3ff);
+        font-size: 1.1rem;
+    }
+
+    .kd-perks strong { display: block; color: #0f172a; font-size: 0.9rem; }
+
+    /* ---------- Description ---------- */
+    .kd-section {
+        margin-top: 2.5rem;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 28px;
+        padding: 2rem 2.25rem;
+        box-shadow: 0 16px 34px -22px rgba(15, 23, 42, 0.18);
+    }
+
+    .kd-section h2 {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 1.4rem;
+        font-weight: 800;
+        letter-spacing: -0.4px;
+        margin: 0 0 0.9rem;
+        color: #0f172a;
+    }
+
+    .kd-section p { color: #475569; line-height: 1.75; margin: 0; white-space: pre-line; }
+
+    .kd-why {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .kd-why div {
+        padding: 1.1rem 1.1rem;
+        border-radius: 18px;
+        background: linear-gradient(145deg, #f8fafc, #eef2ff);
+        border: 1px solid #e0e7ff;
+        font-size: 0.85rem;
+        color: #475569;
+    }
+
+    .kd-why b { display: block; margin-bottom: 0.2rem; font-size: 0.92rem; color: #0f172a; }
+
+    /* ---------- Related ---------- */
+    .kd-related-head { display: flex; align-items: flex-end; justify-content: space-between; margin: 3rem 0 1.2rem; }
+
+    .kd-related-head h2 {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 1.6rem;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        margin: 0;
+    }
+
+    .kd-related-head a { color: #4f46e5; font-weight: 700; font-size: 0.9rem; text-decoration: none; }
+    .kd-related-head a:hover { text-decoration: underline; }
+
+    .kd-related-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1.25rem;
+    }
+
+    .kd-rel-card {
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 22px;
+        overflow: hidden;
+        text-decoration: none;
+        color: inherit;
+        box-shadow: 0 10px 24px -14px rgba(15, 23, 42, 0.18);
+        transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+
+    .kd-rel-card:hover {
+        transform: translateY(-8px);
+        border-color: #818cf8;
+        box-shadow: 0 26px 44px -16px rgba(79, 70, 229, 0.35);
+        color: inherit;
+    }
+
+    .kd-rel-img {
+        height: 170px;
+        background: linear-gradient(145deg, #eef2ff, #f5f3ff);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+
+    .kd-rel-img img {
+        max-height: 130px;
+        max-width: 90%;
+        object-fit: contain;
+        mix-blend-mode: multiply;
+        transition: transform 0.4s ease;
+    }
+
+    .kd-rel-card:hover .kd-rel-img img { transform: scale(1.1) rotate(-1.5deg); }
+
+    .kd-rel-body { padding: 1rem 1.1rem 1.2rem; }
+
+    .kd-rel-name {
+        font-weight: 700;
+        font-size: 0.95rem;
+        line-height: 1.35;
+        color: #0f172a;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        min-height: 2.6em;
+    }
+
+    .kd-rel-price { margin-top: 0.5rem; font-weight: 800; color: #4f46e5; font-size: 1.05rem; }
+
+    /* ---------- Mobile sticky buy bar ---------- */
+    .kd-sticky-bar { display: none; }
+
+    @@media (max-width: 991px) {
+        .kd-grid { grid-template-columns: minmax(0, 1fr); gap: 1.75rem; }
+        .kd-gallery { position: static; }
+        .kd-stage { height: 380px; border-radius: 26px; }
+        .kd-title { font-size: 1.8rem; }
+        .kd-price { font-size: 2.1rem; }
+        .kd-section { padding: 1.5rem 1.25rem; }
+
+        .kd-sticky-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1030;
+            padding: 0.7rem 1rem calc(0.7rem + env(safe-area-inset-bottom, 0px));
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(14px);
+            border-top: 1px solid #e2e8f0;
+            box-shadow: 0 -12px 30px -12px rgba(15, 23, 42, 0.2);
+        }
+
+        .kd-sticky-bar .p { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.2rem; color: #4f46e5; line-height: 1.1; }
+        .kd-sticky-bar .p small { display: block; font-size: 0.68rem; color: #94a3b8; font-weight: 600; }
+        .kd-sticky-bar form { margin: 0; flex: 1; max-width: 220px; }
+        .kd-sticky-bar .kd-btn-cart { padding: 0.8rem 1rem; font-size: 0.92rem; }
+
+        .kd-page { padding-bottom: 6rem; }
+    }
+
+    @@media (max-width: 480px) {
+        .kd-trust-row { grid-template-columns: repeat(2, 1fr); }
+        .kd-stage { height: 320px; }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .kd-gallery, .kd-info { animation: none; }
+        .kd-img, .kd-btn-cart, .kd-rel-card { transition: none; }
+    }
+</style>
+
+<div class="kd-page">
+
+    <!-- Breadcrumb -->
+    <nav class="kd-crumbs" aria-label="Breadcrumb">
+        <a href="/">Home</a><span class="sep">›</span>
+        <a asp-controller="Product" asp-action="Index">Products</a><span class="sep">›</span>
+        @if (Model.CategoryId > 0)
+        {
+            <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@Model.CategoryId">@catName</a>
+            <span class="sep">›</span>
+        }
+        <span class="current">@Model.Name</span>
+    </nav>
+
+    <div class="kd-grid">
+
+        <!-- ===================== GALLERY ===================== -->
+        <div class="kd-gallery">
+            <div class="kd-stage" id="kdStage">
+                <div class="kd-stage-badges">
+                    <span class="kd-badge official">⚡ Official Kintech</span>
+                    @if (!isOut)
+                    {
+                        <span class="kd-badge save">Save ৳@saving.ToString("N0")</span>
+                    }
+                </div>
+
+                <img src="@imgSrc"
+                     alt="@Model.Name"
+                     class="kd-img"
+                     id="kdImg"
+                     onerror="this.onerror=null;this.src='/images/HomePage/HomeProductImg.png';" />
+
+                <span class="kd-stage-hint">Hover to zoom</span>
+            </div>
+
+            <div class="kd-trust-row">
+                <div class="kd-trust"><span>🛡️</span>Official Warranty</div>
+                <div class="kd-trust"><span>✅</span>100% Genuine</div>
+                <div class="kd-trust"><span>🚚</span>Fast Delivery</div>
+                <div class="kd-trust"><span>↩️</span>7-Day Return</div>
+            </div>
+        </div>
+
+        <!-- ===================== INFO ===================== -->
+        <div class="kd-info">
+
+            <a class="kd-cat" asp-controller="Product" asp-action="Index" asp-route-categoryId="@Model.CategoryId">
+                <span>●</span> @catName
+            </a>
+
+            <h1 class="kd-title">@Model.Name</h1>
+
+            <div class="kd-rating">
+                <span class="kd-stars">★★★★★</span>
+                <span><strong style="color:#0f172a;">4.9</strong> · @reviews verified reviews</span>
+                <span>·</span>
+                <span>SKU: KT-@Model.Id.ToString("D4")</span>
+            </div>
+
+            <div class="kd-pricebox">
+                <div class="kd-price-row">
+                    <span class="kd-price">৳@Model.Price.ToString("N0")</span>
+                    <span class="kd-price-old">৳@oldPrice.ToString("N0")</span>
+                    @if (!isOut)
+                    {
+                        <span class="kd-save-chip">You save ৳@saving.ToString("N0")</span>
+                    }
+                </div>
+                <div class="kd-tax-note">Inclusive of all taxes · Free delivery on orders over ৳2,000</div>
+
+                <div class="kd-stock">
+                    <div class="kd-stock-line">
+                        @if (isOut)
+                        {
+                            <span class="kd-stock-state out">Sold out</span>
+                            <span class="kd-stock-units">Restocking soon</span>
+                        }
+                        else if (isLow)
+                        {
+                            <span class="kd-stock-state low">Hurry - only @Model.Stock left</span>
+                            <span class="kd-stock-units">Selling fast</span>
+                        }
+                        else
+                        {
+                            <span class="kd-stock-state">In stock</span>
+                            <span class="kd-stock-units">@Model.Stock units available</span>
+                        }
+                    </div>
+                    <div class="kd-bar">
+                        <div class="kd-bar-fill @(isLow || isOut ? "low" : "")" style="width: @(isOut ? 0 : stockPct)%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kd-actions">
+                @if (isOut)
+                {
+                    <form>
+                        <button type="button" class="kd-btn-cart" disabled>Sold Out</button>
+                    </form>
+                }
+                else
+                {
+                    <form method="post" asp-controller="Cart" asp-action="Add">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <button type="submit" class="kd-btn-cart">🛒 Add to Cart</button>
+                    </form>
+                }
+                <a class="kd-btn-ghost" asp-controller="Product" asp-action="Index">← Keep Shopping</a>
+                <button type="button" class="kd-btn-ghost" id="kdShare" title="Copy product link">🔗 Share</button>
+            </div>
+
+            <ul class="kd-perks">
+                <li>
+                    <span class="ic">🚚</span>
+                    <div><strong>Pick your delivery slot</strong>Choose a convenient time window at checkout across Dhaka and Bangladesh.</div>
+                </li>
+                <li>
+                    <span class="ic">🛡️</span>
+                    <div><strong>Official brand warranty</strong>Sourced directly from authorized distributors.</div>
+                </li>
+                <li>
+                    <span class="ic">💳</span>
+                    <div><strong>Pay your way</strong>bKash, Nagad, VISA, Mastercard or Cash on Delivery.</div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ===================== DESCRIPTION ===================== -->
+    <div class="kd-section">
+        <h2>Product Overview</h2>
+        <p>
+            @(!string.IsNullOrWhiteSpace(Model.Description)
+                ? Model.Description
+                : "Engineered for high performance with official brand warranty, genuine components, and express Bangladesh delivery.")
+        </p>
+
+        <div class="kd-why">
+            <div><b>🛡️ Warranty Backed</b>Every unit ships with an official manufacturer warranty.</div>
+            <div><b>📦 Secure Packaging</b>Carefully packed and inspected before dispatch.</div>
+            <div><b>↩️ Easy Replacement</b>Not satisfied? Return within 7 days for a replacement.</div>
+            <div><b>🎧 Friendly Support</b>Our team is ready to help before and after you buy.</div>
+        </div>
+    </div>
+
+    <!-- ===================== RELATED ===================== -->
+    @if (related.Any())
+    {
+        <div class="kd-related-head">
+            <h2>You may also like</h2>
+            <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@Model.CategoryId">View all →</a>
+        </div>
+
+        <div class="kd-related-grid">
+            @foreach (var r in related)
+            {
+                <a class="kd-rel-card" asp-controller="Product" asp-action="Details" asp-route-id="@r.Id">
+                    <div class="kd-rel-img">
+                        <img src="@ResolveImg(r.ImageUrl)" alt="@r.Name"
+                             onerror="this.onerror=null;this.src='/images/HomePage/HomeProductImg.png';" />
+                    </div>
+                    <div class="kd-rel-body">
+                        <div class="kd-rel-name">@r.Name</div>
+                        <div class="kd-rel-price">৳@r.Price.ToString("N0")</div>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+</div>
+
+<!-- Mobile sticky buy bar -->
+@if (!isOut)
+{
+    <div class="kd-sticky-bar">
+        <div class="p"><small>Kintech Price</small>৳@Model.Price.ToString("N0")</div>
+        <form method="post" asp-controller="Cart" asp-action="Add">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <button type="submit" class="kd-btn-cart">🛒 Add to Cart</button>
+        </form>
+    </div>
+}
+
+<script>
+(function () {
+    // ---- hover zoom that follows the cursor (desktop only) ----
+    var stage = document.getElementById('kdStage');
+    var img = document.getElementById('kdImg');
+    var canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+    if (stage && img && canHover) {
+        stage.addEventListener('mousemove', function (e) {
+            var r = stage.getBoundingClientRect();
+            var x = ((e.clientX - r.left) / r.width) * 100;
+            var y = ((e.clientY - r.top) / r.height) * 100;
+            img.style.transformOrigin = x + '% ' + y + '%';
+            img.style.transform = 'scale(1.7)';
+        });
+        stage.addEventListener('mouseleave', function () {
+            img.style.transform = 'scale(1)';
+        });
+    }
+
+    // ---- share / copy link ----
+    var share = document.getElementById('kdShare');
+    if (share) {
+        share.addEventListener('click', function () {
+            var url = window.location.href;
+            var done = function () {
+                var old = share.textContent;
+                share.textContent = '✔ Link copied';
+                setTimeout(function () { share.textContent = old; }, 1800);
+            };
+            if (navigator.share) {
+                navigator.share({ title: document.title, url: url }).catch(function () {});
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(done);
+            }
+        });
+    }
+})();
+</script>
